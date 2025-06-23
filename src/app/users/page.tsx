@@ -1,0 +1,8 @@
+export default function UsersPage() {
+  return (
+    <div className="p-4 text-center">
+      <h1 className="text-2xl font-bold">صفحة المستخدمين</h1>
+      <p className="text-muted-foreground">سيتم بناء هذه الصفحة قريباً.</p>
+    </div>
+  );
+}
