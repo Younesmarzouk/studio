@@ -1,3 +1,5 @@
+import * as React from 'react';
+import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -45,29 +47,31 @@ export default function MessagesPage() {
         <CardContent className="p-0">
           <div className="flex flex-col">
             {messages.map((message, index) => (
-              <div key={message.id}>
-                <div className="flex items-center gap-4 p-4 hover:bg-accent cursor-pointer">
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={message.avatar} alt={message.name} data-ai-hint="person face" />
-                    <AvatarFallback>{message.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <div className="flex justify-between items-center">
-                      <h3 className="font-bold">{message.name}</h3>
-                      <p className="text-xs text-muted-foreground">{message.time}</p>
-                    </div>
-                    <div className="flex justify-between items-start">
-                      <p className="text-sm text-muted-foreground truncate w-4/5">{message.lastMessage}</p>
-                      {message.unread > 0 && (
-                        <div className="w-5 h-5 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold">
-                          {message.unread}
-                        </div>
-                      )}
+              <React.Fragment key={message.id}>
+                <Link href="/messages/chat" className="block hover:bg-accent cursor-pointer">
+                  <div className="flex items-center gap-4 p-4">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage src={message.avatar} alt={message.name} data-ai-hint="person face" />
+                      <AvatarFallback>{message.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-center">
+                        <h3 className="font-bold">{message.name}</h3>
+                        <p className="text-xs text-muted-foreground">{message.time}</p>
+                      </div>
+                      <div className="flex justify-between items-start">
+                        <p className="text-sm text-muted-foreground truncate w-4/5">{message.lastMessage}</p>
+                        {message.unread > 0 && (
+                          <div className="w-5 h-5 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold">
+                            {message.unread}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
+                </Link>
                 {index < messages.length - 1 && <Separator />}
-              </div>
+              </React.Fragment>
             ))}
           </div>
         </CardContent>

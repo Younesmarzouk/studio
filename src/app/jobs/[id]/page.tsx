@@ -2,9 +2,23 @@ import { jobs } from '@/lib/data';
 import { notFound } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Star, Hammer, Calendar, Wallet, FileText, ChevronLeft } from 'lucide-react';
+import { MapPin, Star, Hammer, Calendar, Wallet, FileText, ChevronLeft, Zap, Wrench, Code, PaintRoller, Users, TrendingUp, Sprout } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import * as React from 'react';
+import Image from 'next/image';
+
+const iconMap: { [key: string]: React.ElementType } = {
+  Hammer,
+  Zap,
+  Wrench,
+  Code,
+  PaintRoller,
+  Users,
+  TrendingUp,
+  Sprout,
+  Default: Hammer,
+};
 
 export default function JobDetailPage({ params }: { params: { id: string } }) {
   const job = jobs.find(j => j.id.toString() === params.id);
@@ -13,6 +27,8 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
     notFound();
   }
 
+  const IconComponent = iconMap[job.icon] || Hammer;
+
   return (
     <div className="p-4 md:p-6 max-w-3xl mx-auto">
         <Link href="/jobs" className="inline-flex items-center gap-2 text-sm text-muted-foreground mb-4 hover:text-primary">
@@ -20,12 +36,17 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
             العودة إلى كل الوظائف
         </Link>
       <Card>
+        {job.image && (
+          <div className="relative h-64 w-full">
+            <Image src={job.image} alt={job.title} layout="fill" objectFit="cover" data-ai-hint={job['data-ai-hint']} />
+          </div>
+        )}
         <CardHeader>
           <div className="flex justify-between items-start">
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-12 h-12 rounded-lg bg-accent flex items-center justify-center">
-                    <Hammer className="h-6 w-6 text-accent-foreground" />
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-16 h-16 rounded-lg bg-accent flex items-center justify-center flex-shrink-0">
+                    <IconComponent className="h-8 w-8 text-accent-foreground" />
                 </div>
                 <div>
                     <CardTitle className="text-2xl">{job.title}</CardTitle>
@@ -74,10 +95,12 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
             </div>
 
             <div className="mt-8 pt-6 border-t text-center">
-                <Button size="lg" className="w-full md:w-auto">
-                    تواصل مع صاحب العمل
-                </Button>
-                <p className="text-xs text-muted-foreground mt-2">تحتاج إلى تسجيل الدخول للتواصل</p>
+                <Link href="/messages/chat" passHref>
+                    <Button size="lg" className="w-full md:w-auto">
+                        تواصل مع صاحب العمل
+                    </Button>
+                </Link>
+                <p className="text-xs text-muted-foreground mt-2">سيتم نقلك إلى صفحة المحادثة للتواصل.</p>
             </div>
         </CardContent>
       </Card>

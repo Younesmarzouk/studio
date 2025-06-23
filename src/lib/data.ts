@@ -12,6 +12,9 @@ export type Job = {
   price: string;
   rating: number;
   featured: boolean;
+  icon: string;
+  image?: string;
+  "data-ai-hint"?: string;
 };
 
 export type Worker = {
@@ -54,6 +57,9 @@ export const jobs: Job[] = [
     price: "200 درهم/اليوم",
     rating: 4.7,
     featured: true,
+    icon: "Hammer",
+    image: "https://placehold.co/600x400.png",
+    "data-ai-hint": "carpentry tools",
   },
   {
     id: 2,
@@ -62,6 +68,7 @@ export const jobs: Job[] = [
     price: "حسب الخدمة",
     rating: 4.5,
     featured: false,
+    icon: "Zap",
   },
    {
     id: 3,
@@ -70,6 +77,7 @@ export const jobs: Job[] = [
     price: "150 درهم/اليوم",
     rating: 4.2,
     featured: false,
+    icon: "Wrench",
   },
    {
     id: 4,
@@ -78,6 +86,9 @@ export const jobs: Job[] = [
     price: "500 درهم/اليوم",
     rating: 4.9,
     featured: true,
+    icon: "Code",
+    image: "https://placehold.co/600x400.png",
+    "data-ai-hint": "laptop code",
   },
 ];
 

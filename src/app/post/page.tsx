@@ -3,6 +3,8 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
+import * as React from "react"
+import Image from "next/image"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -43,6 +45,8 @@ const formSchema = z.object({
 })
 
 export default function PostPage() {
+  const [imagePreview, setImagePreview] = React.useState<string | null>(null)
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -60,6 +64,7 @@ export default function PostPage() {
       description: "سيتم مراجعته ونشره في أقرب وقت.",
     })
     form.reset();
+    setImagePreview(null);
   }
 
   return (
@@ -172,13 +177,27 @@ export default function PostPage() {
                     <FormLabel>إضافة صورة (اختياري)</FormLabel>
                     <FormControl>
                       <div className="flex items-center justify-center w-full">
-                        <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted">
-                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                <Upload className="w-10 h-10 mb-3 text-muted-foreground" />
-                                <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">انقر للتحميل</span> أو اسحب وأفلت</p>
-                                <p className="text-xs text-muted-foreground">SVG, PNG, JPG</p>
-                            </div>
-                            <Input id="dropzone-file" type="file" className="hidden" onChange={(e) => field.onChange(e.target.files?.[0])} />
+                        <label htmlFor="dropzone-file" className="relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted">
+                            {imagePreview ? (
+                              <Image src={imagePreview} alt="Image Preview" fill className="object-contain rounded-lg p-2" />
+                            ) : (
+                              <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                  <Upload className="w-10 h-10 mb-3 text-muted-foreground" />
+                                  <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">انقر للتحميل</span> أو اسحب وأفلت</p>
+                                  <p className="text-xs text-muted-foreground">SVG, PNG, JPG</p>
+                              </div>
+                            )}
+                            <Input id="dropzone-file" type="file" className="hidden" 
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                field.onChange(file);
+                                if (file) {
+                                    setImagePreview(URL.createObjectURL(file));
+                                } else {
+                                    setImagePreview(null);
+                                }
+                            }}
+                            />
                         </label>
                       </div> 
                     </FormControl>

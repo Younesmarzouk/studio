@@ -14,6 +14,9 @@ const allJobs = [
     price: "حسب المشروع",
     rating: 4.8,
     featured: false,
+    icon: "PaintRoller",
+    image: "https://placehold.co/600x400.png",
+    "data-ai-hint": "interior design",
   },
   {
     id: 6,
@@ -22,6 +25,7 @@ const allJobs = [
     price: "120 درهم/اليوم",
     rating: 4.3,
     featured: false,
+    icon: "Users",
   },
   {
     id: 7,
@@ -30,6 +34,9 @@ const allJobs = [
     price: "7000 درهم/الشهر",
     rating: 4.9,
     featured: true,
+    icon: "TrendingUp",
+    image: "https://placehold.co/600x400.png",
+    "data-ai-hint": "digital marketing chart",
   },
   {
     id: 8,
@@ -38,6 +45,7 @@ const allJobs = [
     price: "250 درهم",
     rating: 4.6,
     featured: false,
+    icon: "Sprout",
   },
 ];
 
@@ -63,7 +71,7 @@ export default function JobsPage() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {allJobs.map(job => (
           <div key={job.id} className="w-full">
             <JobCard job={job} />

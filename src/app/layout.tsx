@@ -12,7 +12,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
-  const showBottomNav = !['/login', '/register'].includes(pathname);
+  const showBottomNav = !['/login', '/register', '/messages/chat'].includes(pathname);
 
   return (
     <html lang="ar" dir="rtl">
