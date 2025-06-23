@@ -24,7 +24,7 @@ export default function Home() {
     <div className="flex flex-col w-full">
       <HomeHeader />
 
-      <div className="p-4 bg-background">
+      <div className="p-4 bg-secondary/30">
         <div className="relative">
           <Input
             type="search"
@@ -38,11 +38,12 @@ export default function Home() {
         </div>
       </div>
       
-      <div className="px-4">
+      <div className="px-4 pt-4">
         <Carousel className="w-full"
           opts={{
             align: "start",
             loop: true,
+            direction: 'rtl',
           }}
         >
           <CarouselContent>

@@ -12,6 +12,14 @@ export default function SettingsPage() {
   const [notifications, setNotifications] = React.useState(true);
   const [darkMode, setDarkMode] = React.useState(false);
 
+  React.useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
+
   return (
     <div className="p-4 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold mb-4 text-center">الإعدادات</h1>
@@ -65,10 +73,12 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        <Button variant="destructive" className="w-full">
-          <LogOut className="mr-2 h-4 w-4" />
-          تسجيل الخروج
-        </Button>
+        <Link href="/login" className="w-full">
+          <Button variant="destructive" className="w-full">
+            <LogOut className="ml-2 h-4 w-4" />
+            تسجيل الخروج
+          </Button>
+        </Link>
       </div>
     </div>
   );
