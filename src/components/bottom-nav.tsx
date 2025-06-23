@@ -2,14 +2,14 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, MessageSquare, PlusSquare, Users, Settings } from "lucide-react"
+import { Home, MessageSquare, PlusSquare, User, Settings } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navItems = [
   { href: "/", label: "الرئيسية", icon: Home },
   { href: "/messages", label: "الرسائل", icon: MessageSquare },
   { href: "/post", label: "نشر إعلان", icon: PlusSquare, isCentral: true },
-  { href: "/users", label: "المستخدمون", icon: Users },
+  { href: "/account", label: "حسابي", icon: User },
   { href: "/settings", label: "الإعدادات", icon: Settings },
 ]
 
@@ -25,7 +25,7 @@ export default function BottomNav() {
             return (
               <Link href={item.href} key={item.href} className="relative -top-6">
                 <div className="flex items-center justify-center h-16 w-16 bg-primary rounded-2xl text-primary-foreground shadow-lg transform transition-transform hover:scale-105">
-                  <item.icon className="h-8 w-8" />
+                  <item.icon className="h-8 w-8 text-background" />
                 </div>
               </Link>
             )

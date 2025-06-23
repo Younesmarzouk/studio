@@ -14,14 +14,6 @@ export type Job = {
   featured: boolean;
 };
 
-export type Worker = {
-  id: number;
-  name: string;
-  title: string;
-  city: string;
-  rating: number;
-};
-
 export const sliderItems: SliderItem[] = [
   {
     title: "وظائف مميزة",
@@ -75,36 +67,5 @@ export const jobs: Job[] = [
     price: "500 درهم/اليوم",
     rating: 4.9,
     featured: true,
-  },
-];
-
-export const workers: Worker[] = [
-  {
-    id: 1,
-    name: "سارة محمد",
-    title: "مربية أطفال - خبرة 5 سنوات",
-    city: "الرباط",
-    rating: 4.2,
-  },
-  {
-    id: 2,
-    name: "أحمد العلوي",
-    title: "مصمم جرافيك",
-    city: "فاس",
-    rating: 4.9,
-  },
-  {
-    id: 3,
-    name: "كريم يوسفي",
-    title: "سائق خاص",
-    city: "الدار البيضاء",
-    rating: 4.6,
-  },
-   {
-    id: 4,
-    name: "فاطمة الزهراء",
-    title: "طباخة منزلية",
-    city: "أكادير",
-    rating: 4.8,
   },
 ];

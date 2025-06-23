@@ -29,7 +29,7 @@ export default function SettingsPage() {
             <CardTitle className="text-lg">الحساب</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Link href="/settings/profile" className="flex items-center justify-between p-3 rounded-lg hover:bg-accent cursor-pointer">
+            <Link href="/account" className="flex items-center justify-between p-3 rounded-lg hover:bg-accent cursor-pointer">
               <div className="flex items-center gap-4">
                 <User className="h-5 w-5 text-muted-foreground" />
                 <span>ملفــي الشخصــي</span>

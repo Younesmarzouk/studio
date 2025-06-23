@@ -13,11 +13,10 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Search, ChevronLeft } from "lucide-react"
-import { jobs, workers, sliderItems } from '@/lib/data';
+import { jobs, sliderItems } from '@/lib/data';
 import Link from 'next/link';
 import HomeHeader from '@/components/home-header';
 import JobCard from '@/components/job-card';
-import WorkerCard from '@/components/worker-card';
 
 export default function Home() {
   return (
@@ -81,23 +80,6 @@ export default function Home() {
           {jobs.map(job => (
             <div key={job.id} className="flex-shrink-0 w-2/3 md:w-1/4">
               <JobCard job={job} />
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="pb-6">
-        <div className="flex justify-between items-center px-4 mb-4">
-          <h2 className="text-lg font-bold text-foreground">باحثون عن عمل</h2>
-          <Link href="/users" className="flex items-center gap-1 text-sm text-primary font-semibold">
-            عرض الكل
-            <ChevronLeft className="h-4 w-4" />
-          </Link>
-        </div>
-        <div className="flex overflow-x-auto gap-4 px-4 pb-4 scrollbar-hide">
-          {workers.map(worker => (
-            <div key={worker.id} className="flex-shrink-0 w-2/3 md:w-1/4">
-                <WorkerCard worker={worker} />
             </div>
           ))}
         </div>
