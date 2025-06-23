@@ -1,52 +1,56 @@
-import WorkerCard from '@/components/worker-card';
+import JobCard from '@/components/job-card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, SlidersHorizontal } from 'lucide-react';
-import { workers } from '@/lib/data';
+import { jobs } from '@/lib/data';
 
-const allWorkers = [
-  ...workers,
+// Let's expand the list of jobs for a richer page
+const allJobs = [
+  ...jobs,
   {
     id: 5,
-    name: "ياسمين بناني",
-    title: "مترجمة فورية (انجليزي/عربي)",
-    city: "طنجة",
-    rating: 4.7,
+    title: "مطلوب مصمم داخلي",
+    city: "أكادير",
+    price: "حسب المشروع",
+    rating: 4.8,
+    featured: false,
   },
   {
     id: 6,
-    name: "عمر الشريف",
-    title: "كهربائي سيارات",
-    city: "مراكش",
-    rating: 4.4,
+    title: "مساعدة منزلية",
+    city: "فاس",
+    price: "120 درهم/اليوم",
+    rating: 4.3,
+    featured: false,
   },
   {
     id: 7,
-    name: "ليلى العلمي",
-    title: "مدربة لياقة بدنية",
+    title: "خبير تسويق رقمي",
     city: "الدار البيضاء",
-    rating: 5.0,
+    price: "7000 درهم/الشهر",
+    rating: 4.9,
+    featured: true,
   },
   {
     id: 8,
-    name: "يوسف نصيري",
-    title: "فني تكييف وتبريد",
-    city: "الرباط",
+    title: "حدائقي لتنسيق فيلا",
+    city: "مراكش",
+    price: "250 درهم",
     rating: 4.6,
+    featured: false,
   },
 ];
 
-
-export default function UsersPage() {
+export default function JobsPage() {
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4 text-center">الباحثون عن عمل</h1>
+      <h1 className="text-2xl font-bold mb-4 text-center">عروض العمل</h1>
       
       <div className="flex gap-2 mb-6">
         <div className="relative flex-grow">
           <Input
             type="search"
-            placeholder="ابحث عن عامل أو حرفة..."
+            placeholder="ابحث عن وظيفة أو خدمة..."
             className="w-full pl-10 pr-4 py-2 rounded-xl border-2 border-border bg-card"
             dir="rtl"
           />
@@ -60,9 +64,9 @@ export default function UsersPage() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {allWorkers.map(worker => (
-          <div key={worker.id} className="w-full">
-            <WorkerCard worker={worker} />
+        {allJobs.map(job => (
+          <div key={job.id} className="w-full">
+            <JobCard job={job} />
           </div>
         ))}
       </div>

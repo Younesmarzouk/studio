@@ -12,7 +12,7 @@ import {
 } from "@/components/carousel"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Search, Hammer, MapPin, Star, User, ChevronLeft } from "lucide-react"
+import { Search, ChevronLeft } from "lucide-react"
 import { jobs, workers, sliderItems } from '@/lib/data';
 import Link from 'next/link';
 import HomeHeader from '@/components/home-header';
@@ -50,7 +50,7 @@ export default function Home() {
               <CarouselItem key={index}>
                 <Card className="overflow-hidden border-none shadow-lg">
                   <CardContent className="relative flex aspect-video items-end justify-start p-0">
-                    <Image src={item.image} alt={item.title} layout="fill" objectFit="cover" />
+                    <Image src={item.image} alt={item.title} fill style={{ objectFit: 'cover' }} data-ai-hint={item['data-ai-hint']} />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
                     <div className="relative z-10 p-6 text-white w-full">
                       <h3 className="text-xl font-bold font-headline">{item.title}</h3>
@@ -61,7 +61,6 @@ export default function Home() {
               </CarouselItem>
             ))}
           </CarouselContent>
-          {/* Add Previous/Next for desktop, but they can be hidden on mobile for a cleaner look */}
           <div className="hidden md:block">
             <CarouselPrevious />
             <CarouselNext />
@@ -79,7 +78,9 @@ export default function Home() {
         </div>
         <div className="flex overflow-x-auto gap-4 px-4 pb-4 scrollbar-hide">
           {jobs.map(job => (
-            <JobCard key={job.id} job={job} />
+            <div key={job.id} className="flex-shrink-0 w-2/3 md:w-1/4">
+              <JobCard job={job} />
+            </div>
           ))}
         </div>
       </section>
@@ -94,7 +95,9 @@ export default function Home() {
         </div>
         <div className="flex overflow-x-auto gap-4 px-4 pb-4 scrollbar-hide">
           {workers.map(worker => (
-            <WorkerCard key={worker.id} worker={worker} />
+            <div key={worker.id} className="flex-shrink-0 w-2/3 md:w-1/4">
+                <WorkerCard worker={worker} />
+            </div>
           ))}
         </div>
       </section>

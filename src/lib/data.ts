@@ -2,6 +2,7 @@ export type SliderItem = {
   title: string;
   description: string;
   image: string;
+  "data-ai-hint": string;
 };
 
 export type Job = {
