@@ -26,7 +26,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { toast } from "@/hooks/use-toast"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Briefcase, UserPlus } from "lucide-react"
+import { Briefcase, UserPlus, Upload } from "lucide-react"
 
 const formSchema = z.object({
   type: z.enum(["job", "worker"], {
@@ -39,6 +39,7 @@ const formSchema = z.object({
   description: z.string().min(10, "يجب أن يكون الوصف 10 أحرف على الأقل.").max(500, "يجب أن يكون الوصف 500 حرف على الأكثر."),
   city: z.string().min(2, "يجب إدخال اسم المدينة."),
   price: z.string().optional(),
+  image: z.any().optional(),
 })
 
 export default function PostPage() {
@@ -157,6 +158,29 @@ export default function PostPage() {
                         className="resize-none"
                         {...field}
                       />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="image"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>إضافة صورة (اختياري)</FormLabel>
+                    <FormControl>
+                      <div className="flex items-center justify-center w-full">
+                        <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted">
+                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                <Upload className="w-10 h-10 mb-3 text-muted-foreground" />
+                                <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">انقر للتحميل</span> أو اسحب وأفلت</p>
+                                <p className="text-xs text-muted-foreground">SVG, PNG, JPG</p>
+                            </div>
+                            <Input id="dropzone-file" type="file" className="hidden" onChange={(e) => field.onChange(e.target.files?.[0])} />
+                        </label>
+                      </div> 
                     </FormControl>
                     <FormMessage />
                   </FormItem>

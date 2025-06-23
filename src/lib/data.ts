@@ -14,6 +14,17 @@ export type Job = {
   featured: boolean;
 };
 
+export type Worker = {
+  id: number;
+  name: string;
+  title: string;
+  city: string;
+  rating: number;
+  avatar: string;
+  'data-ai-hint': string;
+};
+
+
 export const sliderItems: SliderItem[] = [
   {
     title: "وظائف مميزة",
@@ -67,5 +78,44 @@ export const jobs: Job[] = [
     price: "500 درهم/اليوم",
     rating: 4.9,
     featured: true,
+  },
+];
+
+export const workers: Worker[] = [
+  {
+    id: 1,
+    name: "يوسف حمدي",
+    title: "مصمم جرافيك",
+    city: "الدار البيضاء",
+    rating: 4.8,
+    avatar: "https://placehold.co/100x100.png",
+    'data-ai-hint': 'graphic designer face',
+  },
+  {
+    id: 2,
+    name: "فاطمة العلوي",
+    title: "مترجمة",
+    city: "الرباط",
+    rating: 4.9,
+    avatar: "https://placehold.co/100x100.png",
+    'data-ai-hint': 'translator woman face',
+  },
+  {
+    id: 3,
+    name: "محمد أمين",
+    title: "مساعد افتراضي",
+    city: "عن بعد",
+    rating: 4.6,
+    avatar: "https://placehold.co/100x100.png",
+    'data-ai-hint': 'man face',
+  },
+  {
+    id: 4,
+    name: "ليلى بناني",
+    title: "طباخة منزلية",
+    city: "مراكش",
+    rating: 4.7,
+    avatar: "https://placehold.co/100x100.png",
+    'data-ai-hint': 'cook woman face',
   },
 ];

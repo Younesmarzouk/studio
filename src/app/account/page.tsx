@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { User, Phone, Mail, Award, Briefcase, Building, MapPin, Pencil, Plus, GalleryHorizontal } from 'lucide-react';
+import { User, Phone, Mail, Award, Briefcase, Building, MapPin, Pencil, GalleryHorizontal } from 'lucide-react';
+import Link from 'next/link';
 
 const user = {
     name: 'أحمد العلوي',
@@ -60,10 +61,12 @@ export default function AccountPage() {
                         </div>
                     </div>
                     <div className="flex-shrink-0 mt-4 md:mt-0">
-                        <Button>
-                            <Pencil className="ml-2 h-4 w-4" />
-                            تعديل الملف الشخصي
-                        </Button>
+                        <Link href="/account/edit" passHref>
+                            <Button>
+                                <Pencil className="ml-2 h-4 w-4" />
+                                تعديل الملف الشخصي
+                            </Button>
+                        </Link>
                     </div>
                 </CardContent>
             </Card>
