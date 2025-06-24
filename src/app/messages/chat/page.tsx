@@ -7,7 +7,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { auth, db } from '@/lib/firebase';
@@ -37,6 +36,7 @@ const ChatPageContent = () => {
     const [user, setUser] = React.useState<User | null>(null);
     const [currentUserProfile, setCurrentUserProfile] = React.useState<UserProfile | null>(null);
     const [loading, setLoading] = React.useState(true);
+    const [isChatReady, setIsChatReady] = React.useState(false);
     const scrollAreaRef = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {
@@ -57,11 +57,53 @@ const ChatPageContent = () => {
     }, [router, toast]);
     
     React.useEffect(() => {
-        if (!partnerId && !loading) {
+        if (!loading && !partnerId) {
             toast({ variant: 'destructive', title: 'خطأ', description: 'لم يتم تحديد المستخدم الآخر.' });
             router.push('/messages');
         }
     }, [partnerId, router, toast, loading]);
+    
+    // New effect to ensure the chat document exists before listening for messages
+    React.useEffect(() => {
+        const ensureChatExists = async () => {
+            if (!user || !partnerId || !currentUserProfile) return;
+
+            const chatId = [user.uid, partnerId].sort().join('_');
+            const chatDocRef = doc(db, 'chats', chatId);
+
+            try {
+                const chatSnap = await getDoc(chatDocRef);
+                if (!chatSnap.exists()) {
+                    await setDoc(chatDocRef, {
+                        members: [user.uid, partnerId],
+                        createdAt: serverTimestamp(),
+                        participants: {
+                            [user.uid]: {
+                                name: currentUserProfile.name,
+                                avatar: currentUserProfile.avatar
+                            },
+                            [partnerId]: {
+                                name: partnerName,
+                                avatar: partnerAvatar
+                            }
+                        }
+                    });
+                }
+                setIsChatReady(true);
+            } catch (error: any) {
+                console.error("Error ensuring chat exists:", error);
+                let description = "فشلت عملية تهيئة المحادثة.";
+                if (error.code === 'permission-denied') {
+                    description = "فشلت العملية بسبب قواعد الأمان. يرجى مراجعة إعدادات Firebase.";
+                }
+                toast({ variant: 'destructive', title: 'خطأ في المحادثة', description });
+            }
+        };
+
+        if (user && partnerId && currentUserProfile) {
+            ensureChatExists();
+        }
+    }, [user, partnerId, currentUserProfile, partnerName, partnerAvatar, toast]);
 
     React.useEffect(() => {
         if (scrollAreaRef.current) {
@@ -69,54 +111,35 @@ const ChatPageContent = () => {
         }
     }, [messages]);
 
+    // Effect for listening to messages, now depends on isChatReady
     React.useEffect(() => {
-        if (!user || !partnerId) return;
+        if (!user || !partnerId || !isChatReady) return;
         setLoading(true);
 
         const chatId = [user.uid, partnerId].sort().join('_');
-        const chatDocRef = doc(db, 'chats', chatId);
-        
-        const unsubscribeChat = onSnapshot(chatDocRef, (chatSnap) => {
-            if (chatSnap.exists()) {
-                const messagesCollection = collection(db, 'chats', chatId, 'messages');
-                const q = query(messagesCollection, orderBy('time', 'asc'));
+        const messagesCollection = collection(db, 'chats', chatId, 'messages');
+        const q = query(messagesCollection, orderBy('time', 'asc'));
 
-                const unsubscribeMessages = onSnapshot(q, (msgSnapshot) => {
-                    const fetchedMessages = msgSnapshot.docs.map(doc => {
-                        const data = doc.data();
-                        return {
-                            id: doc.id,
-                            senderId: data.senderId,
-                            text: data.text,
-                            time: data.time?.toDate().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) || ''
-                        } as Message;
-                    });
-                    setMessages(fetchedMessages);
-                    setLoading(false);
-                }, (error) => {
-                    console.error("Error fetching messages:", error);
-                    toast({ variant: 'destructive', title: 'فشل تحميل الرسائل', description: "حدث خطأ أثناء جلب الرسائل. قد يكون بسبب قواعد الأمان." });
-                    setLoading(false);
-                });
-
-                return () => unsubscribeMessages();
-            } else {
-                setMessages([]);
-                setLoading(false);
-            }
-        }, (error: any) => {
-            console.error("Error subscribing to chat document:", error);
-            let description = "لا يمكن الوصول إلى بيانات المحادثة.";
-            if (error.code === 'permission-denied') {
-                description = "فشلت العملية بسبب قواعد الأمان. يرجى مراجعة إعدادات Firebase.";
-            }
-            toast({ variant: 'destructive', title: 'خطأ في المحادثة', description });
+        const unsubscribeMessages = onSnapshot(q, (msgSnapshot) => {
+            const fetchedMessages = msgSnapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    senderId: data.senderId,
+                    text: data.text,
+                    time: data.time?.toDate().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) || ''
+                } as Message;
+            });
+            setMessages(fetchedMessages);
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching messages:", error);
+            toast({ variant: 'destructive', title: 'فشل تحميل الرسائل', description: "حدث خطأ أثناء جلب الرسائل. قد يكون بسبب قواعد الأمان." });
             setLoading(false);
         });
 
-        return () => unsubscribeChat();
-    }, [user, partnerId, toast]);
-
+        return () => unsubscribeMessages();
+    }, [user, partnerId, isChatReady, toast]);
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -130,22 +153,7 @@ const ChatPageContent = () => {
         const chatDocRef = doc(db, 'chats', chatId);
 
         try {
-            await setDoc(chatDocRef, {
-                members: [user.uid, partnerId],
-                lastMessage: newMessage,
-                lastMessageTimestamp: serverTimestamp(),
-                participants: {
-                    [user.uid]: {
-                        name: currentUserProfile.name,
-                        avatar: currentUserProfile.avatar
-                    },
-                    [partnerId]: {
-                        name: partnerName,
-                        avatar: partnerAvatar
-                    }
-                }
-            }, { merge: true });
-
+            // First, add the message
             await addDoc(messagesCollection, {
                 text: newMessage,
                 senderId: user.uid,
@@ -153,6 +161,11 @@ const ChatPageContent = () => {
                 time: serverTimestamp(),
             });
 
+            // Then, update the chat document with the last message info
+            await setDoc(chatDocRef, {
+                lastMessage: newMessage,
+                lastMessageTimestamp: serverTimestamp(),
+            }, { merge: true });
 
             setNewMessage("");
         } catch (error: any) {
@@ -165,7 +178,7 @@ const ChatPageContent = () => {
         }
     }
 
-    if (!partnerId && loading) {
+    if (!partnerId && !loading && !isChatReady) {
       return (
           <div className="flex h-full w-full items-center justify-center">
               <Loader2 className="h-10 w-10 animate-spin" />

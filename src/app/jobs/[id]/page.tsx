@@ -9,7 +9,7 @@ import Link from 'next/link';
 import * as React from 'react';
 import Image from 'next/image';
 import { db, auth } from '@/lib/firebase';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import type { Job } from '@/lib/data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -63,7 +63,20 @@ export default function JobDetailPage() {
 
       if (docSnap.exists()) {
         const data = docSnap.data();
-        setJob({ id: docSnap.id, ...data } as Ad);
+        // Fetch advertiser info to ensure it's available
+        const userRef = doc(db, 'users', data.userId);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+            const userData = userSnap.data();
+            setJob({ 
+                id: docSnap.id, 
+                ...data,
+                userName: userData.name,
+                userAvatar: userData.avatar,
+            } as Ad);
+        } else {
+             setJob({ id: docSnap.id, ...data } as Ad); // Set job even if user is not found
+        }
       } else {
         setJob(null); // Explicitly set to null if not found
       }
@@ -83,52 +96,19 @@ export default function JobDetailPage() {
       return router.push('/login');
     }
     
-    if (!job || !job.userId) {
-      toast({ variant: "destructive", title: "خطأ", description: "بيانات الإعلان غير كاملة ولا يمكن بدء المحادثة." });
+    if (!job || !job.userId || !job.userName) {
+      toast({ variant: "destructive", title: "خطأ", description: "معلومات صاحب الإعلان غير متوفرة أو غير مكتملة." });
       return;
     }
     
     setIsContacting(true);
     
     try {
-      // Fetch advertiser's profile to ensure we have up-to-date info
-      const advertiserDocRef = doc(db, 'users', job.userId);
-      const advertiserDocSnap = await getDoc(advertiserDocRef);
-      if (!advertiserDocSnap.exists()) {
-        throw new Error("لم يتم العثور على ملف صاحب الإعلان.");
-      }
-      const advertiserProfile = advertiserDocSnap.data();
-
-      // Get current user's profile to store in chat participants
-      const currentUserDocRef = doc(db, 'users', user.uid);
-      const currentUserDocSnap = await getDoc(currentUserDocRef);
-      if (!currentUserDocSnap.exists()) {
-        throw new Error("لم يتم العثور على ملفك الشخصي. يرجى إكمال ملفك الشخصي أولاً.");
-      }
-      const currentUserProfile = currentUserDocSnap.data();
-      
-      const chatId = [user.uid, job.userId].sort().join('_');
-      const chatDocRef = doc(db, 'chats', chatId);
-
-      // Use setDoc with merge to create/update chat, ensuring participant data is fresh
-      await setDoc(chatDocRef, {
-          members: [user.uid, job.userId],
-          participants: {
-              [user.uid]: {
-                  name: currentUserProfile.name,
-                  avatar: currentUserProfile.avatar
-              },
-              [job.userId]: {
-                  name: advertiserProfile.name,
-                  avatar: advertiserProfile.avatar || ''
-              }
-          }
-      }, { merge: true });
-      
-      router.push(`/messages/chat?partnerId=${job.userId}&partnerName=${encodeURIComponent(advertiserProfile.name)}&partnerAvatar=${encodeURIComponent(advertiserProfile.avatar || '')}`);
+      // Just navigate. The chat page will handle creating the chat document.
+      router.push(`/messages/chat?partnerId=${job.userId}&partnerName=${encodeURIComponent(job.userName)}&partnerAvatar=${encodeURIComponent(job.userAvatar || '')}`);
 
     } catch (error: any) {
-        console.error("Error creating or getting chat:", error);
+        console.error("Error navigating to chat:", error);
         toast({
             variant: "destructive",
             title: "فشل بدء المحادثة",

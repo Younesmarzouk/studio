@@ -104,13 +104,20 @@ export default function PostPage() {
 
     try {
         let imageUrl = "";
+        // Step 1: Upload image if it exists
         if (values.image && values.image instanceof File) {
             const file = values.image;
             const storageRef = ref(storage, `ads/${currentUser.uid}/${Date.now()}_${file.name}`);
-            const snapshot = await uploadBytes(storageRef, file);
-            imageUrl = await getDownloadURL(snapshot.ref);
+            try {
+                const snapshot = await uploadBytes(storageRef, file);
+                imageUrl = await getDownloadURL(snapshot.ref);
+            } catch (storageError: any) {
+                console.error("Firebase Storage Error: ", storageError);
+                throw new Error("فشل رفع الصورة بسبب خطأ في الصلاحيات. يرجى مراجعة قواعد الأمان في Firebase Storage.");
+            }
         }
 
+        // Step 2: Get user's profile data
         const userDocRef = doc(db, 'users', currentUser.uid);
         const userDocSnap = await getDoc(userDocRef);
         
@@ -119,6 +126,7 @@ export default function PostPage() {
         }
         const userData = userDocSnap.data();
 
+        // Step 3: Add ad document to Firestore
         await addDoc(collection(db, "ads"), {
             userId: currentUser.uid,
             userName: userData.name,
@@ -131,6 +139,8 @@ export default function PostPage() {
             price: values.price || "",
             imageUrl: imageUrl,
             createdAt: serverTimestamp(),
+            featured: false, // Default value
+            rating: 0, // Default value
         });
         
         toast({
@@ -144,13 +154,9 @@ export default function PostPage() {
     } catch (error: any) {
         console.error("Detailed error posting ad: ", error);
         
-        let description = "حدث خطأ غير متوقع أثناء الحفظ.";
-        if (error.code === 'storage/unauthorized') {
-            description = "فشل رفع الصورة بسبب عدم وجود صلاحيات كافية. يرجى التأكد من أن قواعد الأمان في Firebase Storage تسمح بالكتابة في مسار 'ads/'.";
-        } else if (error.code === 'permission-denied') {
+        let description = error.message || "حدث خطأ غير متوقع أثناء الحفظ.";
+        if (error.code === 'permission-denied') {
             description = "فشل حفظ بيانات الإعلان بسبب عدم وجود صلاحيات كافية في Firestore. يرجى مراجعة قواعد الأمان.";
-        } else if (error instanceof Error) {
-            description = error.message;
         }
 
         toast({

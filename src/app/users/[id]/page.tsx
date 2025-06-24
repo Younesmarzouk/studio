@@ -13,7 +13,7 @@ import PageHeader from '@/components/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { UserProfile } from '@/lib/types';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, collection, query, where, getDocs, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import type { Job } from '@/lib/data';
 import JobCard from '@/components/job-card';
 import { useParams, notFound, useRouter } from 'next/navigation';
@@ -134,34 +134,7 @@ export default function UserPage() {
         setIsContacting(true);
         
         try {
-          const currentUserDocRef = doc(db, 'users', loggedInUser.uid);
-          const currentUserDocSnap = await getDoc(currentUserDocRef);
-          if (!currentUserDocSnap.exists()) {
-            throw new Error("لم يتم العثور على ملفك الشخصي. يرجى إكمال ملفك الشخصي أولاً.");
-          }
-          const currentUserProfile = currentUserDocSnap.data();
-          
-          const chatId = [loggedInUser.uid, profileUser.uid].sort().join('_');
-          const chatDocRef = doc(db, 'chats', chatId);
-    
-          const chatSnap = await getDoc(chatDocRef);
-          if (!chatSnap.exists()) {
-              await setDoc(chatDocRef, {
-                  members: [loggedInUser.uid, profileUser.uid],
-                  createdAt: serverTimestamp(),
-                  participants: {
-                      [loggedInUser.uid]: {
-                          name: currentUserProfile.name,
-                          avatar: currentUserProfile.avatar
-                      },
-                      [profileUser.uid]: {
-                          name: profileUser.name,
-                          avatar: profileUser.avatar || ''
-                      }
-                  }
-              }, { merge: true });
-          }
-          
+          // Just navigate. The chat page will handle creating the chat document.
           router.push(`/messages/chat?partnerId=${profileUser.uid}&partnerName=${encodeURIComponent(profileUser.name)}&partnerAvatar=${encodeURIComponent(profileUser.avatar || '')}`);
     
         } catch (error: any) {
