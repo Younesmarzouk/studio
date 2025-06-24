@@ -89,8 +89,7 @@ export default function PostPage() {
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
+    if (!user) {
         toast({
             variant: "destructive",
             title: "يجب تسجيل الدخول أولاً",
@@ -106,17 +105,17 @@ export default function PostPage() {
         let imageUrl = "";
         if (values.image && values.image instanceof File) {
             const file = values.image;
-            const storageRef = ref(storage, `ads/${currentUser.uid}/${Date.now()}_${file.name}`);
+            const storageRef = ref(storage, `ads/${user.uid}/${Date.now()}_${file.name}`);
             const snapshot = await uploadBytes(storageRef, file);
             imageUrl = await getDownloadURL(snapshot.ref);
         }
 
-        const userDocRef = doc(db, 'users', currentUser.uid);
+        const userDocRef = doc(db, 'users', user.uid);
         const userDocSnap = await getDoc(userDocRef);
         const userData = userDocSnap.exists() ? userDocSnap.data() : { name: 'مستخدم غير معروف', avatar: '' };
 
         await addDoc(collection(db, "ads"), {
-            userId: currentUser.uid,
+            userId: user.uid,
             userName: userData.name,
             userAvatar: userData.avatar,
             type: values.type,
@@ -142,9 +141,11 @@ export default function PostPage() {
         
         let description = "حدث خطأ غير متوقع أثناء الحفظ.";
         if (error.code === 'permission-denied' || error.code === 'PERMISSION_DENIED') {
-            description = "فشل حفظ بيانات الإعلان بسبب قواعد الأمان في Firestore.";
+            description = "فشل حفظ بيانات الإعلان بسبب قواعد الأمان في Firestore. يرجى مراجعة الإعدادات في حساب Firebase الخاص بك.";
         } else if (error.code === 'storage/unauthorized') {
-            description = "فشل رفع الصورة بسبب قواعد الأمان في Firebase Storage. يرجى مراجعة الإعدادات.";
+            description = "فشل رفع الصورة بسبب قواعد الأمان في Firebase Storage. يرجى مراجعة إعدادات الأمان لمخزن الملفات.";
+        } else if (error.code === 'storage/object-not-found') {
+             description = "لم يتم العثور على الملف المراد رفعه.";
         } else if (error instanceof Error) {
             description = error.message;
         }

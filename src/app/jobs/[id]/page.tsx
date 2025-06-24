@@ -1,19 +1,20 @@
 "use client"
 
-import { notFound, useParams } from 'next/navigation';
+import { notFound, useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Star, Hammer, Calendar, Wallet, FileText, ChevronLeft, Zap, Wrench, Code, PaintRoller, Users, TrendingUp, Sprout, MessageSquare } from 'lucide-react';
+import { MapPin, Star, Hammer, Calendar, Wallet, FileText, ChevronLeft, Zap, Wrench, Code, PaintRoller, Users, TrendingUp, Sprout, MessageSquare, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import * as React from 'react';
 import Image from 'next/image';
 import { db, auth } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import type { Job } from '@/lib/data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useAuthState } from 'react-firebase-hooks/auth';
+import { useToast } from "@/hooks/use-toast"
 
 type Ad = Job & {
     description?: string;
@@ -44,9 +45,13 @@ const iconMap: { [key: string]: React.ElementType } = {
 export default function JobDetailPage() {
   const params = useParams();
   const id = params.id as string;
+  const router = useRouter();
+  const { toast } = useToast();
+
   const [job, setJob] = React.useState<Ad | null>(null);
   const [loading, setLoading] = React.useState(true);
-  const [user] = useAuthState(auth);
+  const [isContacting, setIsContacting] = React.useState(false);
+  const [user, authLoading] = useAuthState(auth);
 
   React.useEffect(() => {
     if (!id) return;
@@ -68,8 +73,68 @@ export default function JobDetailPage() {
     fetchJob();
   }, [id]);
 
+  const handleContact = async () => {
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "يرجى تسجيل الدخول",
+        description: "يجب تسجيل الدخول أولاً للتواصل مع صاحب الإعلان.",
+      });
+      return router.push('/login');
+    }
+    if (!job || !job.userId || !job.userName) {
+      toast({ variant: "destructive", title: "خطأ", description: "معلومات صاحب الإعلان غير متوفرة." });
+      return;
+    }
+    
+    setIsContacting(true);
+    
+    try {
+      // Get current user's profile to store in chat participants
+      const currentUserDocRef = doc(db, 'users', user.uid);
+      const currentUserDocSnap = await getDoc(currentUserDocRef);
+      if (!currentUserDocSnap.exists()) {
+        throw new Error("لم يتم العثور على ملفك الشخصي. يرجى إكمال ملفك الشخصي أولاً.");
+      }
+      const currentUserProfile = currentUserDocSnap.data();
+      
+      const chatId = [user.uid, job.userId].sort().join('_');
+      const chatDocRef = doc(db, 'chats', chatId);
 
-  if (loading) {
+      const chatSnap = await getDoc(chatDocRef);
+      if (!chatSnap.exists()) {
+          await setDoc(chatDocRef, {
+              members: [user.uid, job.userId],
+              createdAt: serverTimestamp(),
+              participants: {
+                  [user.uid]: {
+                      name: currentUserProfile.name,
+                      avatar: currentUserProfile.avatar
+                  },
+                  [job.userId]: {
+                      name: job.userName,
+                      avatar: job.userAvatar || ''
+                  }
+              }
+          }, { merge: true });
+      }
+      
+      router.push(`/messages/chat?partnerId=${job.userId}&partnerName=${encodeURIComponent(job.userName)}&partnerAvatar=${encodeURIComponent(job.userAvatar || '')}`);
+
+    } catch (error: any) {
+        console.error("Error creating or getting chat:", error);
+        toast({
+            variant: "destructive",
+            title: "فشل بدء المحادثة",
+            description: error.message || "حدث خطأ ما، يرجى المحاولة مرة أخرى.",
+        });
+    } finally {
+        setIsContacting(false);
+    }
+  }
+
+
+  if (loading || authLoading) {
     return (
       <div className="p-4 md:p-6 max-w-3xl mx-auto">
         <Skeleton className="h-8 w-48 mb-4" />
@@ -194,20 +259,12 @@ export default function JobDetailPage() {
             <div className="mt-8 pt-6 border-t text-center">
                  {isOwnAd ? (
                      <p className="text-sm text-muted-foreground">هذا هو إعلانك.</p>
-                 ) : user && job.userId ? (
-                    <Link href={`/messages/chat?partnerId=${job.userId}&partnerName=${encodeURIComponent(job.userName || '')}&partnerAvatar=${encodeURIComponent(job.userAvatar || '')}`} passHref>
-                        <Button size="lg" className="w-full md:w-auto">
-                            <MessageSquare className="ml-2 h-5 w-5" />
-                            تواصل مع صاحب العمل
-                        </Button>
-                    </Link>
-                ) : (
-                     <Link href="/login">
-                        <Button size="lg" className="w-full md:w-auto">
-                            سجل الدخول للتواصل
-                        </Button>
-                    </Link>
-                )}
+                 ) : (
+                    <Button size="lg" className="w-full md:w-auto" onClick={handleContact} disabled={isContacting || authLoading}>
+                        {isContacting ? <Loader2 className="ml-2 h-5 w-5 animate-spin" /> : <MessageSquare className="ml-2 h-5 w-5" />}
+                        {isContacting ? 'جاري التحضير...' : (user ? 'تواصل مع صاحب العمل' : 'سجل الدخول للتواصل')}
+                    </Button>
+                 )}
                 {!isOwnAd && <p className="text-xs text-muted-foreground mt-2">سيتم نقلك إلى صفحة المحادثة للتواصل.</p>}
             </div>
         </CardContent>

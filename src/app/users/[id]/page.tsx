@@ -7,18 +7,18 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { User, Phone, Mail, Award, Briefcase, Building, MapPin, Pencil, GalleryHorizontal, List, MessageSquare } from 'lucide-react';
+import { User, Phone, Mail, Award, Briefcase, Building, MapPin, Pencil, GalleryHorizontal, List, MessageSquare, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import PageHeader from '@/components/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { UserProfile } from '@/lib/types';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import type { User as FirebaseUser } from 'firebase/auth';
+import { doc, getDoc, collection, query, where, getDocs, setDoc, serverTimestamp } from 'firebase/firestore';
 import type { Job } from '@/lib/data';
 import JobCard from '@/components/job-card';
-import { useParams, notFound } from 'next/navigation';
+import { useParams, notFound, useRouter } from 'next/navigation';
 import { useAuthState } from 'react-firebase-hooks/auth';
+import { useToast } from "@/hooks/use-toast"
 
 const UserPageSkeleton = () => (
     <div>
@@ -53,11 +53,15 @@ const UserPageSkeleton = () => (
 export default function UserPage() {
     const params = useParams();
     const userId = params.id as string;
-    const [loggedInUser] = useAuthState(auth);
+    const router = useRouter();
+    const { toast } = useToast();
+    
+    const [loggedInUser, authLoading] = useAuthState(auth);
     
     const [profileUser, setProfileUser] = React.useState<UserProfile | null>(null);
     const [userAds, setUserAds] = React.useState<Job[]>([]);
     const [loading, setLoading] = React.useState(true);
+    const [isContacting, setIsContacting] = React.useState(false);
 
     React.useEffect(() => {
         const fetchUserData = async () => {
@@ -66,13 +70,14 @@ export default function UserPage() {
                 return;
             }
 
+            setLoading(true);
             try {
                 // Fetch profile user's data
                 const userDocRef = doc(db, 'users', userId);
                 const userDocSnap = await getDoc(userDocRef);
 
                 if (userDocSnap.exists()) {
-                    setProfileUser(userDocSnap.data() as UserProfile);
+                    setProfileUser({uid: userDocSnap.id, ...userDocSnap.data()} as UserProfile);
                 } else {
                     console.error("User not found");
                     setProfileUser(null);
@@ -112,7 +117,66 @@ export default function UserPage() {
         fetchUserData();
     }, [userId]);
 
-    if (loading) {
+    const handleContact = async () => {
+        if (!loggedInUser) {
+          toast({
+            variant: "destructive",
+            title: "يرجى تسجيل الدخول",
+            description: "يجب تسجيل الدخول أولاً للتواصل مع هذا المستخدم.",
+          });
+          return router.push('/login');
+        }
+        if (!profileUser) {
+          toast({ variant: "destructive", title: "خطأ", description: "معلومات المستخدم غير متوفرة." });
+          return;
+        }
+        
+        setIsContacting(true);
+        
+        try {
+          const currentUserDocRef = doc(db, 'users', loggedInUser.uid);
+          const currentUserDocSnap = await getDoc(currentUserDocRef);
+          if (!currentUserDocSnap.exists()) {
+            throw new Error("لم يتم العثور على ملفك الشخصي. يرجى إكمال ملفك الشخصي أولاً.");
+          }
+          const currentUserProfile = currentUserDocSnap.data();
+          
+          const chatId = [loggedInUser.uid, profileUser.uid].sort().join('_');
+          const chatDocRef = doc(db, 'chats', chatId);
+    
+          const chatSnap = await getDoc(chatDocRef);
+          if (!chatSnap.exists()) {
+              await setDoc(chatDocRef, {
+                  members: [loggedInUser.uid, profileUser.uid],
+                  createdAt: serverTimestamp(),
+                  participants: {
+                      [loggedInUser.uid]: {
+                          name: currentUserProfile.name,
+                          avatar: currentUserProfile.avatar
+                      },
+                      [profileUser.uid]: {
+                          name: profileUser.name,
+                          avatar: profileUser.avatar || ''
+                      }
+                  }
+              }, { merge: true });
+          }
+          
+          router.push(`/messages/chat?partnerId=${profileUser.uid}&partnerName=${encodeURIComponent(profileUser.name)}&partnerAvatar=${encodeURIComponent(profileUser.avatar || '')}`);
+    
+        } catch (error: any) {
+            console.error("Error creating or getting chat:", error);
+            toast({
+                variant: "destructive",
+                title: "فشل بدء المحادثة",
+                description: error.message || "حدث خطأ ما، يرجى المحاولة مرة أخرى.",
+            });
+        } finally {
+            setIsContacting(false);
+        }
+    }
+
+    if (loading || authLoading) {
         return <UserPageSkeleton />;
     }
     
@@ -154,20 +218,11 @@ export default function UserPage() {
                                         تعديل الملف الشخصي
                                     </Button>
                                 </Link>
-                            ) : loggedInUser ? (
-                                <Link href={`/messages/chat?partnerId=${profileUser.uid}&partnerName=${encodeURIComponent(profileUser.name)}&partnerAvatar=${encodeURIComponent(profileUser.avatar)}`} passHref>
-                                    <Button>
-                                        <MessageSquare className="ml-2 h-4 w-4" />
-                                        تواصل معي
-                                    </Button>
-                                </Link>
                             ) : (
-                                <Link href="/login" passHref>
-                                     <Button>
-                                        <MessageSquare className="ml-2 h-4 w-4" />
-                                        سجل الدخول للتواصل
-                                    </Button>
-                                </Link>
+                                <Button onClick={handleContact} disabled={isContacting || authLoading}>
+                                    {isContacting ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <MessageSquare className="ml-2 h-4 w-4" />}
+                                    {isContacting ? 'جاري التحضير...' : (loggedInUser ? 'تواصل معي' : 'سجل الدخول للتواصل')}
+                                </Button>
                             )}
                         </div>
                     </CardContent>
