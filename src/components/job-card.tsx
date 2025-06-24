@@ -36,55 +36,64 @@ export default function JobCard({ job, isEditable = false, onDeleteClick }: JobC
   };
 
   return (
-    <Card className="overflow-hidden shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-in-out h-full flex flex-col text-right w-full bg-card rounded-2xl">
-      <Link href={`/jobs/${job.id}`} className="block h-full group flex flex-col flex-grow p-4">
-        {job.featured && <Badge className="absolute top-4 left-4 bg-green-100 text-green-800 border-green-200 z-10">مميز</Badge>}
-        
-        <div className="flex items-start gap-4">
-          <div className="flex-shrink-0 w-16 h-16 bg-secondary rounded-xl flex items-center justify-center">
-            <IconComponent className="h-8 w-8 text-primary" />
+    <Card className="overflow-hidden shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-in-out h-full flex flex-col text-right w-full bg-card rounded-2xl p-4">
+      <div className="flex-grow flex flex-col">
+        <Link href={`/jobs/${job.id}`} className="block h-full group flex flex-col flex-grow">
+          {job.featured && <Badge className="absolute top-2 left-2 bg-green-100 text-green-800 border-green-200 z-10">مميز</Badge>}
+          
+          <div className="flex items-center gap-4 mb-3">
+            <div className="flex-shrink-0 w-16 h-16 bg-secondary rounded-xl flex items-center justify-center">
+              <IconComponent className="h-8 w-8 text-primary" />
+            </div>
+            <div className="flex-grow">
+              <Badge variant="outline" className="mb-1">{professionLabel}</Badge>
+              <h3 className="font-bold text-xl text-foreground leading-tight group-hover:text-primary transition-colors">{job.title}</h3>
+            </div>
           </div>
-          <div className="flex-grow">
-            <h3 className="font-bold text-lg text-foreground leading-tight group-hover:text-primary transition-colors">{job.title}</h3>
-            <Badge variant="outline" className="mt-1">{professionLabel}</Badge>
-          </div>
-        </div>
 
-        <div className="my-4 flex-grow space-y-3 text-sm text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-primary/80" />
-            <span>{job.city}</span>
+          <Separator className="my-3" />
+
+          <div className="flex-grow space-y-3 text-sm text-foreground">
+              <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">المدينة:</span>
+                  <span>{job.city}</span>
+              </div>
+              {job.price && (
+                  <div className="flex items-center gap-2">
+                  <Wallet className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">الأجر:</span>
+                  <span>{job.price}</span>
+                  </div>
+              )}
+              {job.workType && (
+                  <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">طبيعة العمل:</span>
+                  <span>{workTypeMap[job.workType]}</span>
+                  </div>
+              )}
           </div>
-          {job.price && (
-            <div className="flex items-center gap-2">
-              <Wallet className="h-4 w-4 text-primary/80" />
-              <span>{job.price}</span>
+          
+          <div className="mt-auto pt-4 flex-shrink-0">
+            <div className="flex justify-between items-center text-sm">
+              <div className="flex items-center gap-1">
+                <span className="text-muted-foreground ml-1 font-medium">({job.rating.toFixed(1)})</span>
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className={`h-4 w-4 ${i < Math.floor(job.rating) ? 'text-amber-400 fill-amber-400' : 'text-gray-300'}`} />
+                ))}
+              </div>
+              <div className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium h-9 px-3 bg-primary text-primary-foreground group-hover:bg-primary/90 transition-colors">
+                عرض التفاصيل
+              </div>
             </div>
-          )}
-          {job.workType && (
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-primary/80" />
-              <span>{workTypeMap[job.workType]}</span>
-            </div>
-          )}
-        </div>
-        
-        <div className="mt-auto pt-4 border-t border-border/60 flex-shrink-0">
-          <div className="flex justify-between items-center text-sm">
-            <div className="flex items-center gap-1">
-              <span className="text-muted-foreground ml-1 font-medium">({job.rating.toFixed(1)})</span>
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className={`h-4 w-4 ${i < Math.floor(job.rating) ? 'text-amber-400 fill-amber-400' : 'text-gray-300'}`} />
-              ))}
-            </div>
-            <span className="font-semibold text-primary group-hover:underline">عرض التفاصيل</span>
           </div>
-        </div>
-      </Link>
+        </Link>
+      </div>
       {isEditable && onDeleteClick && (
         <>
-          <Separator />
-          <div className="p-2 flex gap-2">
+          <Separator className="mt-3 mb-2" />
+          <div className="p-0 flex gap-2">
             <Button asChild variant="outline" size="sm" className="flex-1">
               <Link href={`/jobs/edit/${job.id}`}>
                 <Pencil className="ml-2 h-4 w-4" /> تعديل
