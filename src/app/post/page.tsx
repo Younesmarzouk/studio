@@ -43,18 +43,11 @@ const formSchema = z.object({
     required_error: "يجب اختيار نوع الإعلان.",
   }),
   title: z.string().min(5, "يجب أن يكون العنوان 5 أحرف على الأقل.").max(50, "يجب أن يكون العنوان 50 حرفًا على الأكثر."),
-  category: z.string({
-    required_error: "الرجاء اختيار فئة.",
-  }),
+  category: z.string().min(1, { message: "الرجاء اختيار فئة." }),
   description: z.string().min(10, "يجب أن يكون الوصف 10 أحرف على الأقل.").max(500, "يجب أن يكون الوصف 500 حرف على الأكثر."),
   city: z.string().min(2, "يجب إدخال اسم المدينة."),
   price: z.string().optional().default(""),
-  image: z
-    .instanceof(FileList)
-    .optional()
-    .refine((files) => !files || files.length <= 1, {
-      message: "يمكنك تحميل صورة واحدة فقط.",
-    }),
+  image: z.any().optional(),
 })
 
 export default function PostPage() {
@@ -292,7 +285,7 @@ export default function PostPage() {
                 <FormField
                   control={form.control}
                   name="image"
-                  render={({ field: { onChange, ...fieldProps } }) => (
+                  render={({ field: { onChange, value, ...rest } }) => (
                     <FormItem>
                       <FormLabel>إضافة صورة (اختياري)</FormLabel>
                       <FormControl>
@@ -308,7 +301,7 @@ export default function PostPage() {
                                 </div>
                               )}
                               <Input id="dropzone-file" type="file" className="hidden" 
-                                {...fieldProps}
+                                {...rest}
                                 onChange={(e) => {
                                   const files = e.target.files;
                                   if (files && files.length > 0) {
