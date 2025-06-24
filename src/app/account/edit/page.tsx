@@ -146,7 +146,7 @@ export default function EditAccountPage() {
         })
         router.push('/account');
     } catch (error) {
-        console.error("Error updating profile:", error);
+        console.error("Detailed error updating profile:", error);
         toast({
             variant: 'destructive',
             title: 'خطأ',

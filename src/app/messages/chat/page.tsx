@@ -12,8 +12,9 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { auth, db } from '@/lib/firebase';
 import type { User } from 'firebase/auth';
-import { addDoc, collection, onSnapshot, orderBy, query, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, onSnapshot, orderBy, query, serverTimestamp, setDoc } from 'firebase/firestore';
 import { useSearchParams, useRouter } from 'next/navigation';
+import type { UserProfile } from '@/lib/types';
 
 interface Message {
   id: string;
@@ -27,7 +28,6 @@ const ChatPageContent = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    // Get partner details from URL
     const partnerId = searchParams.get('partnerId');
     const partnerName = searchParams.get('partnerName') || 'مستخدم';
     const partnerAvatar = searchParams.get('partnerAvatar') || `https://placehold.co/40x40.png`;
@@ -35,31 +35,37 @@ const ChatPageContent = () => {
     const [messages, setMessages] = React.useState<Message[]>([]);
     const [newMessage, setNewMessage] = React.useState("");
     const [user, setUser] = React.useState<User | null>(null);
+    const [currentUserProfile, setCurrentUserProfile] = React.useState<UserProfile | null>(null);
     const [loading, setLoading] = React.useState(true);
     const scrollAreaRef = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {
-        const unsubscribeAuth = auth.onAuthStateChanged(currentUser => {
+        const unsubscribeAuth = auth.onAuthStateChanged(async (currentUser) => {
             if (!currentUser) {
                 toast({ variant: 'destructive', title: 'يرجى تسجيل الدخول للمتابعة' });
                 router.replace('/login');
             } else {
                 setUser(currentUser);
+                const userDocRef = doc(db, 'users', currentUser.uid);
+                const userDocSnap = await getDoc(userDocRef);
+                if (userDocSnap.exists()) {
+                    setCurrentUserProfile(userDocSnap.data() as UserProfile);
+                }
             }
         });
         return () => unsubscribeAuth();
     }, [router, toast]);
     
     React.useEffect(() => {
-        if (!partnerId) {
+        if (!partnerId && !loading) {
             toast({ variant: 'destructive', title: 'خطأ', description: 'لم يتم تحديد المستخدم الآخر.' });
             router.push('/messages');
         }
-    }, [partnerId, router, toast]);
+    }, [partnerId, router, toast, loading]);
 
     React.useEffect(() => {
         if (scrollAreaRef.current) {
-            scrollAreaRef.current.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: 'smooth' });
+            scrollAreaRef.current.scrollTo({ top: scrollAreaRef.current.scrollHeight });
         }
     }, [messages]);
 
@@ -67,7 +73,6 @@ const ChatPageContent = () => {
         if (!user || !partnerId) return;
 
         setLoading(true);
-        // Create a consistent chat ID by sorting the user IDs
         const chatId = [user.uid, partnerId].sort().join('_');
         const messagesCollection = collection(db, 'chats', chatId, 'messages');
         const q = query(messagesCollection, orderBy('time', 'asc'));
@@ -86,7 +91,7 @@ const ChatPageContent = () => {
             setLoading(false);
         }, (error) => {
             console.error("Error fetching messages:", error);
-            toast({ variant: 'destructive', title: 'فشل تحميل الرسائل' });
+            toast({ variant: 'destructive', title: 'فشل تحميل الرسائل', description: "قد تحتاج إلى تحديث قواعد الأمان في Firebase." });
             setLoading(false);
         });
 
@@ -95,13 +100,14 @@ const ChatPageContent = () => {
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (newMessage.trim() === "" || !user || !partnerId) {
+        if (newMessage.trim() === "" || !user || !partnerId || !currentUserProfile) {
           if (!user) toast({ variant: 'destructive', title: 'يجب تسجيل الدخول لإرسال رسالة' });
           return;
         }
         
         const chatId = [user.uid, partnerId].sort().join('_');
         const messagesCollection = collection(db, 'chats', chatId, 'messages');
+        const chatDocRef = doc(db, 'chats', chatId);
 
         try {
             await addDoc(messagesCollection, {
@@ -110,23 +116,41 @@ const ChatPageContent = () => {
                 receiverId: partnerId,
                 time: serverTimestamp(),
             });
+
+            // Update chat document for the conversation list
+            await setDoc(chatDocRef, {
+                members: [user.uid, partnerId],
+                lastMessage: newMessage,
+                lastMessageTimestamp: serverTimestamp(),
+                participants: {
+                    [user.uid]: {
+                        name: currentUserProfile.name,
+                        avatar: currentUserProfile.avatar
+                    },
+                    [partnerId]: {
+                        name: partnerName,
+                        avatar: partnerAvatar
+                    }
+                }
+            }, { merge: true });
+
             setNewMessage("");
         } catch (error) {
             console.error("Error sending message: ", error);
-            toast({ variant: 'destructive', title: 'فشل إرسال الرسالة' });
+            toast({ variant: 'destructive', title: 'فشل إرسال الرسالة', description: 'تأكد من تحديث قواعد الأمان في Firebase.' });
         }
     }
 
-    if (!partnerId) {
+    if (!partnerId && loading) {
       return (
-          <div className="flex items-center justify-center h-full">
-              <p>خطأ: لم يتم تحديد شريك المحادثة.</p>
+          <div className="flex h-full w-full items-center justify-center">
+              <Loader2 className="h-10 w-10 animate-spin" />
           </div>
       );
     }
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="flex flex-col h-screen bg-background">
       {/* Header */}
       <header className="flex items-center justify-between p-3 border-b shadow-sm sticky top-0 bg-card z-10">
         <div className="flex items-center gap-3">
@@ -155,12 +179,12 @@ const ChatPageContent = () => {
 
       {/* Messages Area */}
       <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
-        <div className="space-y-4">
+        <div className="space-y-4 pb-4">
             {loading ? (
-                <div className="flex justify-center items-center h-full">
+                <div className="flex justify-center items-center h-full pt-20">
                     <Loader2 className="h-8 w-8 animate-spin" />
                 </div>
-            ) : messages.map(msg => (
+            ) : messages.length > 0 ? messages.map(msg => (
                 <div key={msg.id} className={cn(
                     "flex items-end gap-2 max-w-[80%]",
                     msg.senderId === user?.uid ? 'flex-row-reverse ml-auto' : 'flex-row'
@@ -176,13 +200,16 @@ const ChatPageContent = () => {
                         )}>{msg.time}</p>
                     </div>
                 </div>
-            ))}
+            )) : (
+              <div className="text-center text-muted-foreground pt-20">
+                <p>لا توجد رسائل. ابدأ المحادثة!</p>
+              </div>
+            )}
         </div>
       </ScrollArea>
-      <Separator/>
-
+      
       {/* Input Form */}
-      <div className="p-4 bg-background border-t">
+      <div className="p-4 bg-background border-t sticky bottom-0">
         <form onSubmit={handleSendMessage} className="flex items-center gap-2">
             <Input 
                 value={newMessage}
@@ -190,9 +217,9 @@ const ChatPageContent = () => {
                 placeholder="اكتب رسالتك هنا..." 
                 className="flex-1"
                 dir="rtl"
-                disabled={!user}
+                disabled={!user || !currentUserProfile}
             />
-            <Button type="submit" size="icon" className="flex-shrink-0" disabled={!user || newMessage.trim() === ""}>
+            <Button type="submit" size="icon" className="flex-shrink-0" disabled={!user || !currentUserProfile || newMessage.trim() === ""}>
                 <Send className="h-5 w-5" />
             </Button>
         </form>

@@ -42,8 +42,7 @@ export default function Home() {
         setLoading(true);
         try {
             // Fetch jobs (latest ads of type 'job')
-            // We query all recent ads and filter for jobs on the client to avoid needing a composite index.
-            const adsQuery = query(collection(db, "ads"), orderBy("createdAt", "desc"), limit(8)); // Fetch a bit more to increase chance of finding 4 jobs
+            const adsQuery = query(collection(db, "ads"), orderBy("createdAt", "desc"), limit(8)); 
             const adsSnapshot = await getDocs(adsQuery);
             const allRecentAds = adsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
@@ -64,9 +63,7 @@ export default function Home() {
                 });
             setJobs(fetchedJobs);
             
-            // Fetch workers (ads of type 'worker', but display user profiles)
-            // A more robust solution would be to link worker ads to user profiles.
-            // For now, we fetch user profiles directly as "workers".
+            // Fetch workers (user profiles)
             const usersQuery = query(collection(db, "users"), limit(4));
             const usersSnapshot = await getDocs(usersQuery);
             const fetchedWorkers = usersSnapshot.docs.map(doc => {
@@ -77,7 +74,7 @@ export default function Home() {
                 avatar: data.avatar || `https://placehold.co/100x100.png`,
                 'data-ai-hint': 'person face',
                 title: data.title || 'باحث عن عمل',
-                city: data.city || 'غير محدد',
+                city: data.location || 'غير محدد',
                 rating: data.rating || 4.5,
               } as Worker
             });
@@ -174,7 +171,7 @@ export default function Home() {
       <section className="py-6 bg-secondary/30">
         <div className="flex justify-between items-center px-4 mb-4">
           <h2 className="text-lg font-bold text-foreground">باحثون عن عمل</h2>
-          <Link href="/jobs" className="flex items-center gap-1 text-sm text-primary font-semibold">
+          <Link href="/workers" className="flex items-center gap-1 text-sm text-primary font-semibold">
             عرض الكل
             <ChevronLeft className="h-4 w-4" />
           </Link>

@@ -104,15 +104,13 @@ export default function PostPage() {
 
     try {
         let imageUrl = "";
-        // Check if a new file is selected
-        if (values.image && values.image.name) {
+        if (values.image && values.image instanceof File) {
             const file = values.image;
             const storageRef = ref(storage, `ads/${currentUser.uid}/${Date.now()}_${file.name}`);
             const snapshot = await uploadBytes(storageRef, file);
             imageUrl = await getDownloadURL(snapshot.ref);
         }
 
-        // Fetch current user's profile to get name and avatar
         const userDocRef = doc(db, 'users', currentUser.uid);
         const userDocSnap = await getDoc(userDocRef);
         const userData = userDocSnap.exists() ? userDocSnap.data() : { name: 'مستخدم غير معروف', avatar: '' };
@@ -137,13 +135,13 @@ export default function PostPage() {
         });
         form.reset();
         setImagePreview(null);
-        router.push('/account'); // Redirect to account page to see the new ad
+        router.push('/account');
 
     } catch (error: any) {
-        console.error("Error posting ad: ", error);
+        console.error("Detailed error posting ad: ", error);
         
         let description = "حدث خطأ غير متوقع أثناء الحفظ.";
-        if (error.code === 'permission-denied') {
+        if (error.code === 'permission-denied' || error.code === 'PERMISSION_DENIED') {
             description = "فشلت العملية بسبب قواعد الأمان. يرجى مراجعة إعدادات Firebase.";
         } else if (error instanceof Error) {
             description = error.message;
