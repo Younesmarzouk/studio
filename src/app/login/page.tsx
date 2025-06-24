@@ -45,7 +45,7 @@ export default function LoginPage() {
         title: "أهلاً بعودتك!",
         description: "تم تسجيل دخولك بنجاح.",
       })
-      router.push("/")
+      router.replace("/")
     } catch (error: any) {
       console.error("Error signing in:", error)
       toast({
