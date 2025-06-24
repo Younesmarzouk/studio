@@ -142,7 +142,9 @@ export default function PostPage() {
         
         let description = "حدث خطأ غير متوقع أثناء الحفظ.";
         if (error.code === 'permission-denied' || error.code === 'PERMISSION_DENIED') {
-            description = "فشلت العملية بسبب قواعد الأمان. يرجى مراجعة إعدادات Firebase.";
+            description = "فشل حفظ بيانات الإعلان بسبب قواعد الأمان في Firestore.";
+        } else if (error.code === 'storage/unauthorized') {
+            description = "فشل رفع الصورة بسبب قواعد الأمان في Firebase Storage. يرجى مراجعة الإعدادات.";
         } else if (error instanceof Error) {
             description = error.message;
         }

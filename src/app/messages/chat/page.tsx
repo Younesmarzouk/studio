@@ -76,14 +76,11 @@ const ChatPageContent = () => {
         const chatId = [user.uid, partnerId].sort().join('_');
         const chatDocRef = doc(db, 'chats', chatId);
         
-        // This is the listener for the parent chat document.
         const unsubscribeChat = onSnapshot(chatDocRef, (chatSnap) => {
-            // If the chat document exists, we can safely listen for messages.
             if (chatSnap.exists()) {
                 const messagesCollection = collection(db, 'chats', chatId, 'messages');
                 const q = query(messagesCollection, orderBy('time', 'asc'));
 
-                // This is the listener for the messages subcollection.
                 const unsubscribeMessages = onSnapshot(q, (msgSnapshot) => {
                     const fetchedMessages = msgSnapshot.docs.map(doc => {
                         const data = doc.data();
@@ -102,20 +99,21 @@ const ChatPageContent = () => {
                     setLoading(false);
                 });
 
-                // Return the function to unsubscribe from messages when the parent listener re-runs.
                 return () => unsubscribeMessages();
             } else {
-                // Chat doesn't exist yet. Clear any existing messages and stop loading.
                 setMessages([]);
                 setLoading(false);
             }
-        }, (error) => {
+        }, (error: any) => {
             console.error("Error subscribing to chat document:", error);
-            toast({ variant: 'destructive', title: 'خطأ في المحادثة', description: "لا يمكن الوصول إلى بيانات المحادثة." });
+            let description = "لا يمكن الوصول إلى بيانات المحادثة.";
+            if (error.code === 'permission-denied') {
+                description = "فشلت العملية بسبب قواعد الأمان. يرجى مراجعة إعدادات Firebase.";
+            }
+            toast({ variant: 'destructive', title: 'خطأ في المحادثة', description });
             setLoading(false);
         });
 
-        // Return the main unsubscribe function for the chat document.
         return () => unsubscribeChat();
     }, [user, partnerId, toast]);
 
@@ -132,8 +130,6 @@ const ChatPageContent = () => {
         const chatDocRef = doc(db, 'chats', chatId);
 
         try {
-            // First, ensure the chat document exists by setting it.
-            // Using set with merge:true is safe and will create or update.
             await setDoc(chatDocRef, {
                 members: [user.uid, partnerId],
                 lastMessage: newMessage,
@@ -150,7 +146,6 @@ const ChatPageContent = () => {
                 }
             }, { merge: true });
 
-            // Then, add the message to the subcollection.
             await addDoc(messagesCollection, {
                 text: newMessage,
                 senderId: user.uid,
@@ -160,9 +155,13 @@ const ChatPageContent = () => {
 
 
             setNewMessage("");
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error sending message: ", error);
-            toast({ variant: 'destructive', title: 'فشل إرسال الرسالة', description: 'تأكد من تحديث قواعد الأمان في Firebase.' });
+            let description = "فشل إرسال الرسالة. الرجاء المحاولة مرة أخرى.";
+             if (error.code === 'permission-denied') {
+                description = "فشل إرسال الرسالة بسبب قواعد الأمان. يرجى مراجعة إعدادات Firebase.";
+            }
+            toast({ variant: 'destructive', title: 'فشل إرسال الرسالة', description });
         }
     }
 

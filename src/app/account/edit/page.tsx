@@ -145,12 +145,18 @@ export default function EditAccountPage() {
           description: "تم حفظ تغييراتك بنجاح.",
         })
         router.push('/account');
-    } catch (error) {
+    } catch (error: any) {
         console.error("Detailed error updating profile:", error);
+        let description = "فشل تحديث الملف الشخصي. الرجاء المحاولة مرة أخرى.";
+        if (error.code === 'permission-denied' || error.code === 'PERMISSION_DENIED') {
+            description = "فشل حفظ البيانات بسبب قواعد الأمان في Firestore.";
+        } else if (error.code === 'storage/unauthorized') {
+            description = "فشل رفع الصورة بسبب قواعد الأمان في Firebase Storage.";
+        }
         toast({
             variant: 'destructive',
             title: 'خطأ',
-            description: 'فشل تحديث الملف الشخصي. الرجاء المحاولة مرة أخرى.',
+            description: description,
         })
     } finally {
         setIsSubmitting(false);
