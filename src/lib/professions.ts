@@ -1,5 +1,5 @@
 
-import { Hammer, Zap, Wrench, HardHat, PaintRoller, Car, Scissors, Utensils, Cake, Sprout, Trash2, BookUser, Code, PenTool, ClipboardUser, Baby, HeartHandshake, User, ShoppingCart, Tractor } from "lucide-react";
+import { Hammer, Zap, Wrench, HardHat, PaintRoller, Car, Scissors, Utensils, Cake, Sprout, Trash2, BookUser, Code, PenTool, ClipboardList, Baby, HeartHandshake, User, ShoppingCart, Tractor } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export type Profession = {
@@ -25,7 +25,7 @@ export const professions: Profession[] = [
   { value: "tutoring", label: "مدرس(ة) خاص", icon: BookUser },
   { value: "development", label: "مطور ويب", icon: Code },
   { value: "design", label: "مصمم جرافيك", icon: PenTool },
-  { value: "admin_assistant", label: "مساعد إداري", icon: ClipboardUser },
+  { value: "admin_assistant", label: "مساعد إداري", icon: ClipboardList },
   { value: "childcare", label: "رعاية أطفال", icon: Baby },
   { value: "elderly_care", label: "رعاية كبار السن", icon: HeartHandshake },
   { value: "delivery", label: "عامل توصيل", icon: ShoppingCart },
@@ -36,10 +36,9 @@ export const professions: Profession[] = [
 export const iconMap: { [key: string]: LucideIcon } = professions.reduce((acc, prof) => {
   acc[prof.value] = prof.icon;
   return acc;
-}, {} as { [key: string]: LucideIcon });
+}, {} as { [key:string]: LucideIcon });
+
 
 export const getProfessionByValue = (value: string): Profession | undefined => {
     return professions.find(p => p.value === value);
 }
-
-    
