@@ -6,6 +6,7 @@ import * as z from "zod"
 import * as React from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
+import type { User } from "firebase/auth"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -34,6 +35,8 @@ import PageHeader from "@/components/page-header"
 import { auth, db, storage } from "@/lib/firebase"
 import { addDoc, collection, serverTimestamp } from "firebase/firestore"
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
+import { onAuthStateChanged } from "firebase/auth"
+import { Skeleton } from "@/components/ui/skeleton"
 
 const formSchema = z.object({
   type: z.enum(["job", "worker"], {
@@ -53,7 +56,9 @@ export default function PostPage() {
   const [imagePreview, setImagePreview] = React.useState<string | null>(null)
   const router = useRouter()
   const { toast } = useToast()
-  
+  const [user, setUser] = React.useState<User | null>(null)
+  const [loading, setLoading] = React.useState(true)
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -63,16 +68,33 @@ export default function PostPage() {
       city: "",
     },
   })
+  
+  React.useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        if (currentUser) {
+            setUser(currentUser);
+        } else {
+            toast({
+                variant: "destructive",
+                title: "الوصول مرفوض",
+                description: "الرجاء تسجيل الدخول للمتابعة.",
+            });
+            router.replace('/login');
+        }
+        setLoading(false);
+    });
+    return () => unsubscribe();
+  }, [router, toast]);
+
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const user = auth.currentUser;
     if (!user) {
         toast({
             variant: "destructive",
             title: "يجب تسجيل الدخول أولاً",
             description: "الرجاء تسجيل الدخول لنشر إعلان.",
         });
-        return router.push("/login");
+        return router.replace("/login");
     }
 
     toast({ title: "جاري نشر إعلانك..." });
@@ -123,6 +145,34 @@ export default function PostPage() {
             description: "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
         });
     }
+  }
+  
+  if (loading) {
+    return (
+        <div>
+            <PageHeader title="نشر إعلان جديد" />
+            <div className="p-4 max-w-2xl mx-auto">
+                <Card>
+                    <CardContent className="pt-6 space-y-8">
+                        <div className="space-y-2">
+                            <Skeleton className="h-4 w-1/4" />
+                            <Skeleton className="h-10 w-full" />
+                        </div>
+                         <div className="space-y-2">
+                            <Skeleton className="h-4 w-1/4" />
+                            <Skeleton className="h-10 w-full" />
+                        </div>
+                         <div className="space-y-2">
+                            <Skeleton className="h-4 w-1/4" />
+                            <Skeleton className="h-24 w-full" />
+                        </div>
+                        <Skeleton className="h-48 w-full" />
+                        <Skeleton className="h-10 w-full mt-8" />
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
+    );
   }
 
   return (
