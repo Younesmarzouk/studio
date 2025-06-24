@@ -61,12 +61,12 @@ export default function PostPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      type: "job",
-      title: "",
-      category: "",
-      description: "",
-      city: "",
-      price: "",
+      type: 'job',
+      title: '',
+      category: '',
+      description: '',
+      city: '',
+      price: '',
       image: undefined,
     },
   })
@@ -90,7 +90,8 @@ export default function PostPage() {
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user) {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
         toast({
             variant: "destructive",
             title: "يجب تسجيل الدخول أولاً",
@@ -103,18 +104,19 @@ export default function PostPage() {
     toast({ title: "جاري نشر إعلانك..." });
 
     let imageUrl = "";
-    if (values.image && values.image.length > 0) {
-        const file = values.image[0];
-        const storageRef = ref(storage, `ads/${user.uid}/${Date.now()}_${file.name}`);
+    if (values.image) {
+        const file = values.image;
+        const storageRef = ref(storage, `ads/${currentUser.uid}/${Date.now()}_${file.name}`);
         try {
             const snapshot = await uploadBytes(storageRef, file);
             imageUrl = await getDownloadURL(snapshot.ref);
         } catch (error) {
             console.error("Error uploading image: ", error);
+            const errorMessage = error instanceof Error ? error.message : "حدث خطأ غير متوقع.";
             toast({
                 variant: "destructive",
                 title: "فشل رفع الصورة",
-                description: "حدث خطأ أثناء محاولة رفع الصورة. حاول مرة أخرى.",
+                description: `حدث خطأ أثناء محاولة رفع الصورة: ${errorMessage}`,
             });
             setIsSubmitting(false);
             return;
@@ -123,7 +125,7 @@ export default function PostPage() {
 
     try {
         await addDoc(collection(db, "ads"), {
-            userId: user.uid,
+            userId: currentUser.uid,
             type: values.type,
             title: values.title,
             category: values.category,
@@ -313,10 +315,10 @@ export default function PostPage() {
                               <Input id="dropzone-file" type="file" className="hidden" 
                                 {...rest}
                                 onChange={(e) => {
-                                  const files = e.target.files;
-                                  if (files && files.length > 0) {
-                                    onChange(files);
-                                    setImagePreview(URL.createObjectURL(files[0]));
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    onChange(file);
+                                    setImagePreview(URL.createObjectURL(file));
                                   } else {
                                     onChange(undefined);
                                     setImagePreview(null);
