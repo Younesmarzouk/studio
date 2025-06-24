@@ -93,21 +93,21 @@ export default function Home() {
     <div className="flex flex-col w-full bg-background">
       <HomeHeader />
 
-      <div className="p-4 bg-muted/30">
-        <div className="relative flex items-center">
+      <div className="px-4 -mt-8 z-10">
+        <div className="relative flex items-center bg-card p-2 rounded-2xl shadow-md">
            <Input
             type="search"
             placeholder="ابحث عن وظيفة، عامل، أو خدمة..."
-            className="w-full pl-4 pr-12 py-3 rounded-xl border-none shadow-md text-base"
+            className="w-full pl-4 pr-12 py-3 border-none bg-transparent focus-visible:ring-0 text-base"
             dir="rtl"
           />
-          <Button variant="ghost" size="icon" className="absolute left-2 h-9 w-9 rounded-lg text-muted-foreground hover:bg-transparent">
-            <Search className="h-6 w-6" />
+          <Button variant="default" size="icon" className="absolute left-2 h-10 w-10 rounded-lg text-white">
+            <Search className="h-5 w-5" />
           </Button>
         </div>
       </div>
       
-      <div className="px-4 pt-4">
+      <div className="px-4 pt-6">
         <Carousel 
           plugins={[plugin.current]}
           className="w-full"
@@ -149,13 +149,13 @@ export default function Home() {
         <div className="flex overflow-x-auto gap-4 px-4 pb-4 scrollbar-hide">
           {loading ? (
              [...Array(4)].map((_, i) => (
-                <div key={i} className="flex-shrink-0 w-[80%] md:w-[35%]">
-                  <Skeleton className="h-56 w-full rounded-lg" />
+                <div key={i} className="flex-shrink-0 w-[80%] md:w-[45%] lg:w-[30%]">
+                  <Skeleton className="h-64 w-full rounded-lg" />
                 </div>
               ))
           ) : (
             jobs.map(job => (
-              <div key={job.id} className="flex-shrink-0 w-[80%] md:w-[35%]">
+              <div key={job.id} className="flex-shrink-0 w-[80%] md:w-[45%] lg:w-[30%]">
                 <JobCard job={job} />
               </div>
             ))
@@ -174,13 +174,13 @@ export default function Home() {
         <div className="flex overflow-x-auto gap-4 px-4 pb-4 scrollbar-hide">
           {loading ? (
              [...Array(4)].map((_, i) => (
-                <div key={i} className="flex-shrink-0 w-[70%] md:w-[30%]">
+                <div key={i} className="flex-shrink-0 w-[70%] md:w-[40%] lg:w-[28%]">
                   <Skeleton className="h-48 w-full rounded-lg" />
                 </div>
               ))
           ) : (
             workers.map(worker => (
-              <div key={worker.id} className="flex-shrink-0 w-[70%] md:w-[30%]">
+              <div key={worker.id} className="flex-shrink-0 w-[70%] md:w-[40%] lg:w-[28%]">
                 <WorkerCard worker={worker} />
               </div>
             ))

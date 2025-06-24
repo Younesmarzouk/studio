@@ -1,17 +1,26 @@
 
 "use client"
 
-import { Handshake } from "lucide-react";
+import { Handshake, Moon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function HomeHeader() {
   return (
-    <header className="bg-background p-4 sticky top-0 z-20 border-b">
-      <div className="container mx-auto flex items-center justify-center">
-        <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold font-headline">Zafay</h1>
-          <div className="logo-icon p-1 bg-primary rounded-md">
-              <Handshake className="h-6 w-6 text-primary" />
-          </div>
+    <header className="bg-primary text-primary-foreground p-4 pb-12 rounded-b-[3rem] shadow-lg">
+      <div className="container mx-auto">
+        <div className="flex justify-between items-center mb-2">
+            <div className="flex items-center gap-3">
+                <div className="logo-icon p-2 bg-white/20 rounded-lg">
+                    <Handshake className="h-7 w-7 text-white" />
+                </div>
+                <div>
+                    <h1 className="text-2xl font-bold font-headline">Zafay</h1>
+                    <p className="text-sm opacity-90">منصة الربط بين العمال وأصحاب العمل</p>
+                </div>
+            </div>
+            <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full hover:bg-white/20">
+                <Moon className="h-6 w-6" />
+            </Button>
         </div>
       </div>
     </header>

@@ -14,7 +14,7 @@
     --popover-foreground: 222.2 84% 4.9%;
 
     --primary: 221 83% 53%; /* Vibrant Blue */
-    --primary-foreground: 210 40% 98%; /* White */
+    --primary-foreground: 0 0% 100%; /* White */
     
     --secondary: 220 20% 94%; /* Lighter Grey Blue for icon backgrounds */
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -23,7 +23,7 @@
     --muted-foreground: 215.4 16.3% 46.9%;
 
     --accent: 221 83% 53%; /* Vibrant Blue for active states */
-    --accent-foreground: 210 40% 98%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
@@ -43,7 +43,7 @@
     --popover-foreground: 210 40% 98%;
     
     --primary: 221 83% 53%;
-    --primary-foreground: 210 40% 98%;
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -51,7 +51,7 @@
     --muted-foreground: 215 20.2% 65.1%;
     
     --accent: 221 83% 53%;
-    --accent-foreground: 210 40% 98%;
+    --accent-foreground: 0 0% 100%;
     
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
