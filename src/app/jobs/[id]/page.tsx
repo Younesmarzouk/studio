@@ -38,7 +38,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
       <Card>
         {job.image && (
           <div className="relative h-64 w-full">
-            <Image src={job.image} alt={job.title} layout="fill" objectFit="cover" data-ai-hint={job['data-ai-hint']} />
+            <Image src={job.image} alt={job.title} fill className="object-cover" data-ai-hint={job['data-ai-hint']} />
           </div>
         )}
         <CardHeader>

@@ -51,7 +51,7 @@ export default function Home() {
               <CarouselItem key={index}>
                 <Card className="overflow-hidden border-none shadow-lg">
                   <CardContent className="relative flex aspect-video items-end justify-start p-0">
-                    <Image src={item.image} alt={item.title} fill style={{ objectFit: 'cover' }} data-ai-hint={item['data-ai-hint']} />
+                    <Image src={item.image} alt={item.title} fill className="object-cover" data-ai-hint={item['data-ai-hint']} />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
                     <div className="relative z-10 p-6 text-white w-full">
                       <h3 className="text-xl font-bold font-headline">{item.title}</h3>
