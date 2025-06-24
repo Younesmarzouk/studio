@@ -4,7 +4,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Plus, Settings, CircleUser, Briefcase, Users } from "lucide-react"
+import { Home, Plus, Settings, Briefcase, Users } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navItems = [
@@ -12,7 +12,7 @@ const navItems = [
   { href: "/jobs", label: "الوظائف", icon: Briefcase },
   { href: "/post", label: "أضف إعلان", icon: Plus },
   { href: "/workers", label: "العمال", icon: Users },
-  { href: "/account", label: "حسابي", icon: CircleUser },
+  { href: "/settings", label: "الإعدادات", icon: Settings },
 ];
 
 export default function BottomNav() {
@@ -22,7 +22,7 @@ export default function BottomNav() {
     <div className="fixed bottom-0 left-0 right-0 h-20 bg-card border-t border-border/20 shadow-t-xl z-50">
       <nav className="grid h-full grid-cols-5 items-center max-w-lg mx-auto px-2">
         {navItems.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = pathname.startsWith(item.href) && (item.href !== '/' || pathname === '/');
           if (item.href === "/post") {
             return (
               <div key={item.href} className="flex justify-center items-center">
