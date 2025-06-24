@@ -82,14 +82,23 @@ export default function JobDetailPage() {
       });
       return router.push('/login');
     }
-    if (!job || !job.userId || !job.userName) {
-      toast({ variant: "destructive", title: "خطأ", description: "معلومات صاحب الإعلان غير متوفرة." });
+    
+    if (!job || !job.userId) {
+      toast({ variant: "destructive", title: "خطأ", description: "بيانات الإعلان غير كاملة ولا يمكن بدء المحادثة." });
       return;
     }
     
     setIsContacting(true);
     
     try {
+      // Fetch advertiser's profile to ensure we have up-to-date info
+      const advertiserDocRef = doc(db, 'users', job.userId);
+      const advertiserDocSnap = await getDoc(advertiserDocRef);
+      if (!advertiserDocSnap.exists()) {
+        throw new Error("لم يتم العثور على ملف صاحب الإعلان.");
+      }
+      const advertiserProfile = advertiserDocSnap.data();
+
       // Get current user's profile to store in chat participants
       const currentUserDocRef = doc(db, 'users', user.uid);
       const currentUserDocSnap = await getDoc(currentUserDocRef);
@@ -101,25 +110,22 @@ export default function JobDetailPage() {
       const chatId = [user.uid, job.userId].sort().join('_');
       const chatDocRef = doc(db, 'chats', chatId);
 
-      const chatSnap = await getDoc(chatDocRef);
-      if (!chatSnap.exists()) {
-          await setDoc(chatDocRef, {
-              members: [user.uid, job.userId],
-              createdAt: serverTimestamp(),
-              participants: {
-                  [user.uid]: {
-                      name: currentUserProfile.name,
-                      avatar: currentUserProfile.avatar
-                  },
-                  [job.userId]: {
-                      name: job.userName,
-                      avatar: job.userAvatar || ''
-                  }
+      // Use setDoc with merge to create/update chat, ensuring participant data is fresh
+      await setDoc(chatDocRef, {
+          members: [user.uid, job.userId],
+          participants: {
+              [user.uid]: {
+                  name: currentUserProfile.name,
+                  avatar: currentUserProfile.avatar
+              },
+              [job.userId]: {
+                  name: advertiserProfile.name,
+                  avatar: advertiserProfile.avatar || ''
               }
-          }, { merge: true });
-      }
+          }
+      }, { merge: true });
       
-      router.push(`/messages/chat?partnerId=${job.userId}&partnerName=${encodeURIComponent(job.userName)}&partnerAvatar=${encodeURIComponent(job.userAvatar || '')}`);
+      router.push(`/messages/chat?partnerId=${job.userId}&partnerName=${encodeURIComponent(advertiserProfile.name)}&partnerAvatar=${encodeURIComponent(advertiserProfile.avatar || '')}`);
 
     } catch (error: any) {
         console.error("Error creating or getting chat:", error);
