@@ -82,7 +82,7 @@ export default function EditAccountPage() {
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
-      name: '', title: '', location: '', email: '', phone: '', bio: '', skills: '', avatar: '',
+      name: '', title: '', location: '', email: '', phone: '', bio: '', skills: '',
     },
   })
 
@@ -102,7 +102,6 @@ export default function EditAccountPage() {
                     phone: userData.phone || '',
                     bio: userData.bio || '',
                     skills: (userData.skills || []).join(', '),
-                    avatar: userData.avatar || '',
                 });
                 setImagePreview(userData.avatar || null);
             }
@@ -120,7 +119,7 @@ export default function EditAccountPage() {
     setIsSubmitting(true);
 
     try {
-        let avatarUrl = form.getValues('avatar');
+        let avatarUrl = imagePreview; // Start with the current preview URL
 
         if (values.avatar && values.avatar instanceof File) {
             const file = values.avatar;

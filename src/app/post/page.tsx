@@ -33,7 +33,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Briefcase, UserPlus, Upload, Loader2 } from "lucide-react"
 import PageHeader from "@/components/page-header"
 import { auth, db, storage } from "@/lib/firebase"
-import { addDoc, collection, serverTimestamp } from "firebase/firestore"
+import { addDoc, collection, doc, getDoc, serverTimestamp } from "firebase/firestore"
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
 import { onAuthStateChanged } from "firebase/auth"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -43,7 +43,7 @@ const formSchema = z.object({
     required_error: "يجب اختيار نوع الإعلان.",
   }),
   title: z.string().min(5, "يجب أن يكون العنوان 5 أحرف على الأقل.").max(50, "يجب أن يكون العنوان 50 حرفًا على الأكثر."),
-  category: z.string().min(1, { message: "الرجاء اختيار فئة." }),
+  category: z.string({ required_error: "الرجاء اختيار فئة." }).min(1, { message: "الرجاء اختيار فئة." }),
   description: z.string().min(10, "يجب أن يكون الوصف 10 أحرف على الأقل.").max(500, "يجب أن يكون الوصف 500 حرف على الأكثر."),
   city: z.string().min(2, "يجب إدخال اسم المدينة."),
   price: z.string().optional(),
@@ -67,7 +67,6 @@ export default function PostPage() {
       description: '',
       city: '',
       price: '',
-      image: undefined,
     },
   })
   
@@ -103,29 +102,25 @@ export default function PostPage() {
     setIsSubmitting(true);
     toast({ title: "جاري نشر إعلانك..." });
 
-    let imageUrl = "";
-    if (values.image) {
-        const file = values.image;
-        const storageRef = ref(storage, `ads/${currentUser.uid}/${Date.now()}_${file.name}`);
-        try {
+    try {
+        let imageUrl = "";
+        // Check if a new file is selected
+        if (values.image && values.image.name) {
+            const file = values.image;
+            const storageRef = ref(storage, `ads/${currentUser.uid}/${Date.now()}_${file.name}`);
             const snapshot = await uploadBytes(storageRef, file);
             imageUrl = await getDownloadURL(snapshot.ref);
-        } catch (error) {
-            console.error("Error uploading image: ", error);
-            const errorMessage = error instanceof Error ? error.message : "حدث خطأ غير متوقع.";
-            toast({
-                variant: "destructive",
-                title: "فشل رفع الصورة",
-                description: `حدث خطأ أثناء محاولة رفع الصورة: ${errorMessage}`,
-            });
-            setIsSubmitting(false);
-            return;
         }
-    }
 
-    try {
+        // Fetch current user's profile to get name and avatar
+        const userDocRef = doc(db, 'users', currentUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        const userData = userDocSnap.exists() ? userDocSnap.data() : { name: 'مستخدم غير معروف', avatar: '' };
+
         await addDoc(collection(db, "ads"), {
             userId: currentUser.uid,
+            userName: userData.name,
+            userAvatar: userData.avatar,
             type: values.type,
             title: values.title,
             category: values.category,
@@ -138,17 +133,18 @@ export default function PostPage() {
         
         toast({
             title: "تم نشر إعلانك بنجاح!",
-            description: "سيتم مراجعته ونشره في أقرب وقت.",
+            description: "يمكنك الآن رؤيته في ملفك الشخصي.",
         });
         form.reset();
         setImagePreview(null);
-        router.push('/account');
+        router.push('/account'); // Redirect to account page to see the new ad
+
     } catch (error: any) {
         console.error("Error posting ad: ", error);
         
         let description = "حدث خطأ غير متوقع أثناء الحفظ.";
         if (error.code === 'permission-denied') {
-            description = "فشلت العملية بسبب قواعد الأمان. يرجى التأكد من أن لديك الصلاحية للكتابة في قاعدة البيانات.";
+            description = "فشلت العملية بسبب قواعد الأمان. يرجى مراجعة إعدادات Firebase.";
         } else if (error instanceof Error) {
             description = error.message;
         }
@@ -304,14 +300,14 @@ export default function PostPage() {
                 <FormField
                   control={form.control}
                   name="image"
-                  render={({ field: { onChange, value, ...rest } }) => (
+                  render={({ field }) => (
                     <FormItem>
                       <FormLabel>إضافة صورة (اختياري)</FormLabel>
                       <FormControl>
                         <div className="flex items-center justify-center w-full">
                           <label htmlFor="dropzone-file" className="relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted">
                               {imagePreview ? (
-                                <Image src={imagePreview} alt="Image Preview" fill className="object-contain rounded-lg p-2" />
+                                <Image src={imagePreview} alt="Image Preview" layout="fill" className="object-contain rounded-lg p-2" />
                               ) : (
                                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                     <Upload className="w-10 h-10 mb-3 text-muted-foreground" />
@@ -320,15 +316,11 @@ export default function PostPage() {
                                 </div>
                               )}
                               <Input id="dropzone-file" type="file" className="hidden" 
-                                {...rest}
                                 onChange={(e) => {
                                   const file = e.target.files?.[0];
                                   if (file) {
-                                    onChange(file);
+                                    field.onChange(file);
                                     setImagePreview(URL.createObjectURL(file));
-                                  } else {
-                                    onChange(undefined);
-                                    setImagePreview(null);
                                   }
                               }}
                               />
