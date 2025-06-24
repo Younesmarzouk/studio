@@ -1,4 +1,9 @@
+
+"use client"
+
 import Image from 'next/image';
+import * as React from 'react';
+import Autoplay from "embla-carousel-autoplay"
 import {
   Card,
   CardContent,
@@ -20,6 +25,10 @@ import JobCard from '@/components/job-card';
 import WorkerCard from '@/components/worker-card';
 
 export default function Home() {
+  const plugin = React.useRef(
+    Autoplay({ delay: 4000, stopOnInteraction: true })
+  )
+
   return (
     <div className="flex flex-col w-full">
       <HomeHeader />
@@ -39,12 +48,16 @@ export default function Home() {
       </div>
       
       <div className="px-4 pt-4">
-        <Carousel className="w-full"
+        <Carousel 
+          plugins={[plugin.current]}
+          className="w-full"
           opts={{
             align: "start",
             loop: true,
             direction: 'rtl',
           }}
+          onMouseEnter={plugin.current.stop}
+          onMouseLeave={plugin.current.reset}
         >
           <CarouselContent>
             {sliderItems.map((item, index) => (

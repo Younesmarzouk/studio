@@ -29,6 +29,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { toast } from "@/hooks/use-toast"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Briefcase, UserPlus, Upload } from "lucide-react"
+import PageHeader from "@/components/page-header"
 
 const formSchema = z.object({
   type: z.enum(["job", "worker"], {
@@ -68,153 +69,42 @@ export default function PostPage() {
   }
 
   return (
-    <div className="p-4 max-w-2xl mx-auto">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-center text-2xl font-bold">نشر إعلان جديد</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <FormField
-                control={form.control}
-                name="type"
-                render={({ field }) => (
-                  <FormItem className="space-y-3">
-                    <FormLabel>ماذا تريد أن تعلن؟</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="flex flex-col space-y-1"
-                      >
-                        <FormItem className="flex items-center space-x-3 space-y-0" dir="ltr">
-                          <FormControl>
-                            <RadioGroupItem value="job" />
-                          </FormControl>
-                          <FormLabel className="font-normal flex items-center gap-2">
-                             <Briefcase className="h-5 w-5" /> أبحث عن عامل (عرض عمل)
-                          </FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0" dir="ltr">
-                          <FormControl>
-                            <RadioGroupItem value="worker" />
-                          </FormControl>
-                          <FormLabel className="font-normal flex items-center gap-2">
-                            <UserPlus className="h-5 w-5" /> أبحث عن عمل (عامل)
-                          </FormLabel>
-                        </FormItem>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>عنوان الإعلان</FormLabel>
-                    <FormControl>
-                      <Input placeholder="مثال: نجار محترف للأثاث" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>الفئة</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="اختر فئة الخدمة" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="carpentry">نجارة</SelectItem>
-                        <SelectItem value="electricity">كهرباء</SelectItem>
-                        <SelectItem value="plumbing">سباكة</SelectItem>
-                        <SelectItem value="design">تصميم</SelectItem>
-                        <SelectItem value="development">برمجة وتطوير</SelectItem>
-                        <SelectItem value="other">أخرى</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>وصف الخدمة</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="اكتب تفاصيل عن الخدمة التي تقدمها أو تبحث عنها..."
-                        className="resize-none"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="image"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>إضافة صورة (اختياري)</FormLabel>
-                    <FormControl>
-                      <div className="flex items-center justify-center w-full">
-                        <label htmlFor="dropzone-file" className="relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted">
-                            {imagePreview ? (
-                              <Image src={imagePreview} alt="Image Preview" fill className="object-contain rounded-lg p-2" />
-                            ) : (
-                              <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                  <Upload className="w-10 h-10 mb-3 text-muted-foreground" />
-                                  <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">انقر للتحميل</span> أو اسحب وأفلت</p>
-                                  <p className="text-xs text-muted-foreground">SVG, PNG, JPG</p>
-                              </div>
-                            )}
-                            <Input id="dropzone-file" type="file" className="hidden" 
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                field.onChange(file);
-                                if (file) {
-                                    setImagePreview(URL.createObjectURL(file));
-                                } else {
-                                    setImagePreview(null);
-                                }
-                            }}
-                            />
-                        </label>
-                      </div> 
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div>
+      <PageHeader title="نشر إعلان جديد" />
+      <div className="p-4 max-w-2xl mx-auto">
+        <Card>
+          <CardContent className="pt-6">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <FormField
                   control={form.control}
-                  name="city"
+                  name="type"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>المدينة</FormLabel>
+                    <FormItem className="space-y-3">
+                      <FormLabel>ماذا تريد أن تعلن؟</FormLabel>
                       <FormControl>
-                        <Input placeholder="مثال: الدار البيضاء" {...field} />
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          className="flex flex-col space-y-1"
+                        >
+                          <FormItem className="flex items-center space-x-3 space-y-0" dir="ltr">
+                            <FormControl>
+                              <RadioGroupItem value="job" />
+                            </FormControl>
+                            <FormLabel className="font-normal flex items-center gap-2">
+                              <Briefcase className="h-5 w-5" /> أبحث عن عامل (عرض عمل)
+                            </FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-3 space-y-0" dir="ltr">
+                            <FormControl>
+                              <RadioGroupItem value="worker" />
+                            </FormControl>
+                            <FormLabel className="font-normal flex items-center gap-2">
+                              <UserPlus className="h-5 w-5" /> أبحث عن عمل (عامل)
+                            </FormLabel>
+                          </FormItem>
+                        </RadioGroup>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -223,27 +113,138 @@ export default function PostPage() {
 
                 <FormField
                   control={form.control}
-                  name="price"
+                  name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>السعر / الأجرة (اختياري)</FormLabel>
+                      <FormLabel>عنوان الإعلان</FormLabel>
                       <FormControl>
-                        <Input placeholder="مثال: 200 درهم/اليوم أو حسب الخدمة" {...field} />
+                        <Input placeholder="مثال: نجار محترف للأثاث" {...field} />
                       </FormControl>
-                      <FormDescription>
-                        يمكنك ترك هذا الحقل فارغاً.
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </div>
+                
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>الفئة</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="اختر فئة الخدمة" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="carpentry">نجارة</SelectItem>
+                          <SelectItem value="electricity">كهرباء</SelectItem>
+                          <SelectItem value="plumbing">سباكة</SelectItem>
+                          <SelectItem value="design">تصميم</SelectItem>
+                          <SelectItem value="development">برمجة وتطوير</SelectItem>
+                          <SelectItem value="other">أخرى</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>وصف الخدمة</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="اكتب تفاصيل عن الخدمة التي تقدمها أو تبحث عنها..."
+                          className="resize-none"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="image"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>إضافة صورة (اختياري)</FormLabel>
+                      <FormControl>
+                        <div className="flex items-center justify-center w-full">
+                          <label htmlFor="dropzone-file" className="relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted">
+                              {imagePreview ? (
+                                <Image src={imagePreview} alt="Image Preview" fill className="object-contain rounded-lg p-2" />
+                              ) : (
+                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <Upload className="w-10 h-10 mb-3 text-muted-foreground" />
+                                    <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">انقر للتحميل</span> أو اسحب وأفلت</p>
+                                    <p className="text-xs text-muted-foreground">SVG, PNG, JPG</p>
+                                </div>
+                              )}
+                              <Input id="dropzone-file" type="file" className="hidden" 
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  field.onChange(file);
+                                  if (file) {
+                                      setImagePreview(URL.createObjectURL(file));
+                                  } else {
+                                      setImagePreview(null);
+                                  }
+                              }}
+                              />
+                          </label>
+                        </div> 
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <Button type="submit" className="w-full">نشر الإعلان</Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <FormField
+                    control={form.control}
+                    name="city"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>المدينة</FormLabel>
+                        <FormControl>
+                          <Input placeholder="مثال: الدار البيضاء" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="price"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>السعر / الأجرة (اختياري)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="مثال: 200 درهم/اليوم أو حسب الخدمة" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          يمكنك ترك هذا الحقل فارغاً.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <Button type="submit" className="w-full">نشر الإعلان</Button>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
