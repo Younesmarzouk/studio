@@ -3,12 +3,19 @@ import Link from 'next/link';
 import * as React from 'react';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Star, User } from "lucide-react";
+import { MapPin, Star, User, Clock } from "lucide-react";
 import type { Job } from '@/lib/data';
 import { iconMap } from '@/lib/professions';
 
 type JobCardProps = {
   job: Job;
+};
+
+const workTypeMap: { [key: string]: string } = {
+  daily: "يومي",
+  "part-time": "دوام جزئي",
+  seasonal: "موسمي",
+  "full-time": "دوام كامل",
 };
 
 export default function JobCard({ job }: JobCardProps) {
@@ -33,13 +40,21 @@ export default function JobCard({ job }: JobCardProps) {
 
         </div>
          <div className="mt-4 pt-3 border-t border-border/60 flex-shrink-0">
-            {job.price ? (
-              <p className="font-bold text-primary text-base">{job.price}</p>
-            ) : (
-                <p className="text-sm text-muted-foreground">حسب الاتفاق</p>
-            )}
+            <div className="flex justify-between items-center">
+              {job.price ? (
+                <p className="font-bold text-primary text-base">{job.price}</p>
+              ) : (
+                  <p className="text-sm text-muted-foreground">حسب الاتفاق</p>
+              )}
+              {job.workType && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {workTypeMap[job.workType] || job.workType}
+                  </Badge>
+              )}
+            </div>
             
-            <div className="flex items-center gap-1 mt-1">
+            <div className="flex items-center gap-1 mt-2">
               <span className="text-sm font-bold text-amber-500 ml-1">({job.rating})</span>
               {[...Array(5)].map((_, i) => (
                 <Star key={i} className={`h-4 w-4 ${i < Math.floor(job.rating) ? 'text-amber-400 fill-amber-400' : 'text-gray-300'}`} />

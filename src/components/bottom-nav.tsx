@@ -1,14 +1,14 @@
+
 "use client"
 
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Plus, Settings, CircleUser, MessageCircle } from "lucide-react"
+import { Home, Plus, Settings, CircleUser } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navItems = [
   { href: "/", label: "الرئيسية", icon: Home },
-  { href: "/messages", label: "الرسائل", icon: MessageCircle },
   { href: "/account", label: "حسابي", icon: CircleUser },
   { href: "/settings", label: "الإعدادات", icon: Settings },
 ]
@@ -22,8 +22,8 @@ export default function BottomNav() {
         <nav className="flex justify-around items-center h-full max-w-lg mx-auto px-2">
           {navItems.map((item, index) => (
              <React.Fragment key={item.href}>
-                {/* Add a placeholder for the large central button */}
-                {index === 2 && <div className="w-16 h-16" />}
+                {/* Add a placeholder for the large central button. This makes an even number of items for justify-around to work nicely */}
+                {index === 1 && <div className="w-16 h-16 flex-shrink-0" />}
                 <Link href={item.href} className={cn(
                   "flex flex-col items-center justify-center gap-1 text-muted-foreground transition-colors w-16",
                   pathname === item.href ? "text-primary" : "hover:text-primary"

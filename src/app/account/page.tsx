@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from 'react';
@@ -14,7 +15,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import type { UserProfile } from '@/lib/types';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
-import type { User as FirebaseUser } from 'firebase/auth';
 import type { Job } from '@/lib/data';
 import JobCard from '@/components/job-card';
 
@@ -82,7 +82,7 @@ export default function AccountPage() {
                             rating: data.rating || 4.5,
                             featured: data.featured || false,
                             icon: data.category || 'Hammer',
-                            image: data.imageUrl,
+                            workType: data.workType,
                             createdAt: data.createdAt, // For sorting
                         } as Job & { createdAt: any };
                     });

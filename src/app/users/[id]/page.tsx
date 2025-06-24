@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from 'react';
@@ -91,7 +92,7 @@ export default function UserPage() {
                         rating: data.rating || 4.5,
                         featured: data.featured || false,
                         icon: data.category || 'Hammer',
-                        image: data.imageUrl,
+                        workType: data.workType,
                         createdAt: data.createdAt
                     } as Job & { createdAt: any };
                 });

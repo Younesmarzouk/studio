@@ -38,6 +38,7 @@ export default function JobsPage() {
                         rating: data.rating || 4.5,
                         featured: data.featured || false,
                         icon: data.category || 'other',
+                        workType: data.workType,
                     } as Job;
                 });
               setJobs(fetchedJobs);
@@ -101,5 +102,3 @@ export default function JobsPage() {
     </div>
   );
 }
-
-    

@@ -30,7 +30,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
-import { Briefcase, UserPlus, Loader2 } from "lucide-react"
+import { Briefcase, UserPlus, Loader2, Clock } from "lucide-react"
 import PageHeader from "@/components/page-header"
 import { auth, db } from "@/lib/firebase"
 import { addDoc, collection, doc, getDoc, serverTimestamp } from "firebase/firestore"
@@ -47,6 +47,9 @@ const formSchema = z.object({
   description: z.string().min(10, "يجب أن يكون الوصف 10 أحرف على الأقل.").max(500, "يجب أن يكون الوصف 500 حرف على الأكثر."),
   city: z.string().min(2, "يجب إدخال اسم المدينة."),
   price: z.string().optional(),
+  workType: z.enum(["daily", "part-time", "seasonal", "full-time"], {
+    required_error: "الرجاء تحديد طبيعة العمل.",
+  }),
 })
 
 export default function PostPage() {
@@ -65,6 +68,7 @@ export default function PostPage() {
       description: '',
       city: '',
       price: '',
+      workType: 'daily',
     },
   })
   
@@ -118,6 +122,7 @@ export default function PostPage() {
             description: values.description,
             city: values.city,
             price: values.price || "",
+            workType: values.workType,
             createdAt: serverTimestamp(),
             featured: false,
             rating: 0,
@@ -317,6 +322,41 @@ export default function PostPage() {
                   />
                 </div>
 
+                <FormField
+                  control={form.control}
+                  name="workType"
+                  render={({ field }) => (
+                    <FormItem className="space-y-3">
+                      <FormLabel className="flex items-center gap-2"><Clock className="h-4 w-4"/> طبيعة العمل</FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          className="grid grid-cols-2 md:grid-cols-4 gap-4"
+                        >
+                          <FormItem className="flex items-center space-x-3 space-y-0" dir="ltr">
+                            <FormControl><RadioGroupItem value="daily" /></FormControl>
+                            <FormLabel className="font-normal">يومي</FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-3 space-y-0" dir="ltr">
+                            <FormControl><RadioGroupItem value="part-time" /></FormControl>
+                            <FormLabel className="font-normal">دوام جزئي</FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-3 space-y-0" dir="ltr">
+                            <FormControl><RadioGroupItem value="seasonal" /></FormControl>
+                            <FormLabel className="font-normal">موسمي</FormLabel>
+                          </FormItem>
+                           <FormItem className="flex items-center space-x-3 space-y-0" dir="ltr">
+                            <FormControl><RadioGroupItem value="full-time" /></FormControl>
+                            <FormLabel className="font-normal">دوام كامل</FormLabel>
+                          </FormItem>
+                        </RadioGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
                    {isSubmitting ? (
                         <>
@@ -335,5 +375,3 @@ export default function PostPage() {
     </div>
   )
 }
-
-    

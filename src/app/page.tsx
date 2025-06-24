@@ -57,6 +57,7 @@ export default function Home() {
                         rating: data.rating || 4.5,
                         featured: data.featured || false,
                         icon: data.category || 'other',
+                        workType: data.workType,
                     } as Job;
                 });
             setJobs(fetchedJobs);
@@ -92,16 +93,16 @@ export default function Home() {
     <div className="flex flex-col w-full bg-background">
       <HomeHeader />
 
-      <div className="p-4 bg-primary -mt-10">
-        <div className="relative flex items-center gap-2">
+      <div className="p-4 bg-muted/30">
+        <div className="relative flex items-center">
            <Input
             type="search"
             placeholder="ابحث عن وظيفة، عامل، أو خدمة..."
-            className="w-full pl-4 pr-12 py-3 rounded-xl border-none shadow-md"
+            className="w-full pl-4 pr-12 py-3 rounded-xl border-none shadow-md text-base"
             dir="rtl"
           />
-          <Button variant="default" size="icon" className="absolute left-2 h-9 w-9 rounded-lg">
-            <Search className="h-5 w-5 text-primary-foreground" />
+          <Button variant="ghost" size="icon" className="absolute left-2 h-9 w-9 rounded-lg text-muted-foreground hover:bg-transparent">
+            <Search className="h-6 w-6" />
           </Button>
         </div>
       </div>
@@ -148,13 +149,13 @@ export default function Home() {
         <div className="flex overflow-x-auto gap-4 px-4 pb-4 scrollbar-hide">
           {loading ? (
              [...Array(4)].map((_, i) => (
-                <div key={i} className="flex-shrink-0 w-[70%] md:w-[30%]">
-                  <Skeleton className="h-48 w-full rounded-lg" />
+                <div key={i} className="flex-shrink-0 w-[80%] md:w-[35%]">
+                  <Skeleton className="h-56 w-full rounded-lg" />
                 </div>
               ))
           ) : (
             jobs.map(job => (
-              <div key={job.id} className="flex-shrink-0 w-[70%] md:w-[30%]">
+              <div key={job.id} className="flex-shrink-0 w-[80%] md:w-[35%]">
                 <JobCard job={job} />
               </div>
             ))

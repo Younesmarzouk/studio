@@ -4,7 +4,7 @@
 import { notFound, useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Star, Calendar, Wallet, FileText, ChevronLeft, Phone, User as UserIcon } from 'lucide-react';
+import { MapPin, Star, Calendar, Wallet, FileText, ChevronLeft, Phone, User as UserIcon, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import * as React from 'react';
@@ -22,6 +22,14 @@ type Ad = Job & {
     userName?: string;
     userAvatar?: string;
     userPhone?: string;
+    workType?: string;
+};
+
+const workTypeMap: { [key: string]: string } = {
+  daily: "يومي",
+  "part-time": "دوام جزئي",
+  seasonal: "موسمي",
+  "full-time": "دوام كامل",
 };
 
 export default function JobDetailPage() {
@@ -141,6 +149,10 @@ export default function JobDetailPage() {
                 <Wallet className="h-5 w-5" />
                 <span>{job.price}</span>
             </div>)}
+            {job.workType && (<div className="flex items-center gap-1 text-muted-foreground">
+                <Clock className="h-5 w-5" />
+                <span>{workTypeMap[job.workType] || job.workType}</span>
+            </div>)}
              <div className="flex items-center gap-1 text-muted-foreground">
                 <Calendar className="h-5 w-5" />
                 <span>نشر قبل 3 أيام</span>
@@ -211,5 +223,3 @@ export default function JobDetailPage() {
     </div>
   );
 }
-
-    
