@@ -1,6 +1,6 @@
 "use client"
 
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Star, Hammer, Calendar, Wallet, FileText, ChevronLeft, Zap, Wrench, Code, PaintRoller, Users, TrendingUp, Sprout } from 'lucide-react';
@@ -31,16 +31,18 @@ const iconMap: { [key: string]: React.ElementType } = {
   Default: Hammer,
 };
 
-export default function JobDetailPage({ params }: { params: { id: string } }) {
+export default function JobDetailPage() {
+  const params = useParams();
+  const id = params.id as string;
   const [job, setJob] = React.useState<Job | null>(null);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    if (!params.id) return;
+    if (!id) return;
 
     const fetchJob = async () => {
       setLoading(true);
-      const docRef = doc(db, 'ads', params.id);
+      const docRef = doc(db, 'ads', id);
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
@@ -64,7 +66,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
     };
 
     fetchJob();
-  }, [params.id]);
+  }, [id]);
 
 
   if (loading) {
