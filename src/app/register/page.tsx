@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -30,7 +29,6 @@ const formSchema = z.object({
 })
 
 export default function RegisterPage() {
-  const router = useRouter();
   const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -58,7 +56,7 @@ export default function RegisterPage() {
         title: "تم إنشاء حسابك بنجاح!",
         description: "يتم توجيهك الآن...",
       });
-      router.replace('/');
+      window.location.href = '/';
     } catch (error: any) {
       console.error("Error signing up:", error);
       toast({
