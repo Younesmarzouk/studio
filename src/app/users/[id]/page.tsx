@@ -13,7 +13,7 @@ import PageHeader from '@/components/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { UserProfile } from '@/lib/types';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import type { User as FirebaseUser } from 'firebase/auth';
 import type { Job } from '@/lib/data';
 import JobCard from '@/components/job-card';
@@ -78,9 +78,9 @@ export default function UserPage() {
                     setProfileUser(null);
                 }
 
-                // Fetch profile user's ads
+                // Fetch profile user's ads without ordering to prevent index issues
                 const adsCollection = collection(db, 'ads');
-                const adsQuery = query(adsCollection, where('userId', '==', userId), orderBy('createdAt', 'desc'));
+                const adsQuery = query(adsCollection, where('userId', '==', userId));
                 const adsSnapshot = await getDocs(adsQuery);
                 const fetchedAds = adsSnapshot.docs.map(doc => {
                     const data = doc.data();
@@ -93,8 +93,13 @@ export default function UserPage() {
                         featured: data.featured || false,
                         icon: data.category || 'Hammer',
                         image: data.imageUrl,
-                    } as Job;
+                        createdAt: data.createdAt // For client-side sorting
+                    } as Job & { createdAt: any };
                 });
+                
+                // Sort ads on the client-side
+                fetchedAds.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+
                 setUserAds(fetchedAds);
 
             } catch (error) {
@@ -184,7 +189,7 @@ export default function UserPage() {
 
                          <Card className="shadow-md">
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2"><List className="text-primary" /> إعلاناتي</CardTitle>
+                                <CardTitle className="flex items-center gap-2"><List className="text-primary" /> إعلانات المستخدم</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 {userAds.length > 0 ? (
