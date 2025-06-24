@@ -58,7 +58,7 @@ export default function RegisterPage() {
         title: "تم إنشاء حسابك بنجاح!",
         description: "يتم توجيهك الآن...",
       });
-      router.replace('/');
+      router.push('/');
     } catch (error: any) {
       console.error("Error signing up:", error);
       toast({
