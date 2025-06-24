@@ -6,7 +6,7 @@ export type SliderItem = {
 };
 
 export type Job = {
-  id: number;
+  id: string | number;
   title: string;
   city: string;
   price: string;
@@ -18,7 +18,7 @@ export type Job = {
 };
 
 export type Worker = {
-  id: number;
+  id: string | number;
   name: string;
   title: string;
   city: string;

@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form"
 import * as z from "zod"
 import * as React from "react"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -26,10 +27,13 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { toast } from "@/hooks/use-toast"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useToast } from "@/hooks/use-toast"
+import { Card, CardContent } from "@/components/ui/card"
 import { Briefcase, UserPlus, Upload } from "lucide-react"
 import PageHeader from "@/components/page-header"
+import { auth, db, storage } from "@/lib/firebase"
+import { addDoc, collection, serverTimestamp } from "firebase/firestore"
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
 
 const formSchema = z.object({
   type: z.enum(["job", "worker"], {
@@ -47,6 +51,8 @@ const formSchema = z.object({
 
 export default function PostPage() {
   const [imagePreview, setImagePreview] = React.useState<string | null>(null)
+  const router = useRouter()
+  const { toast } = useToast()
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -58,14 +64,65 @@ export default function PostPage() {
     },
   })
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values)
-    toast({
-      title: "تم إرسال إعلانك بنجاح!",
-      description: "سيتم مراجعته ونشره في أقرب وقت.",
-    })
-    form.reset();
-    setImagePreview(null);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    const user = auth.currentUser;
+    if (!user) {
+        toast({
+            variant: "destructive",
+            title: "يجب تسجيل الدخول أولاً",
+            description: "الرجاء تسجيل الدخول لنشر إعلان.",
+        });
+        return router.push("/login");
+    }
+
+    toast({ title: "جاري نشر إعلانك..." });
+
+    let imageUrl = "";
+    if (values.image && values.image instanceof File) {
+        const file = values.image as File;
+        const storageRef = ref(storage, `ads/${user.uid}/${Date.now()}_${file.name}`);
+        try {
+            const snapshot = await uploadBytes(storageRef, file);
+            imageUrl = await getDownloadURL(snapshot.ref);
+        } catch (error) {
+            console.error("Error uploading image: ", error);
+            toast({
+                variant: "destructive",
+                title: "فشل رفع الصورة",
+                description: "حدث خطأ أثناء محاولة رفع الصورة. حاول مرة أخرى.",
+            });
+            return;
+        }
+    }
+
+    try {
+        await addDoc(collection(db, "ads"), {
+            userId: user.uid,
+            type: values.type,
+            title: values.title,
+            category: values.category,
+            description: values.description,
+            city: values.city,
+            price: values.price || "",
+            imageUrl: imageUrl,
+            createdAt: serverTimestamp(),
+        });
+        
+        toast({
+            title: "تم نشر إعلانك بنجاح!",
+            description: "سيتم مراجعته ونشره في أقرب وقت.",
+        });
+        form.reset();
+        setImagePreview(null);
+        router.push('/jobs');
+    } catch (error) {
+        console.error("Error posting ad: ", error);
+        toast({
+            variant: "destructive",
+            title: "فشل نشر الإعلان",
+            description: "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+        });
+    }
   }
 
   return (
@@ -172,7 +229,7 @@ export default function PostPage() {
                 <FormField
                   control={form.control}
                   name="image"
-                  render={({ field }) => (
+                  render={({ field: { onChange, ...rest } }) => (
                     <FormItem>
                       <FormLabel>إضافة صورة (اختياري)</FormLabel>
                       <FormControl>
@@ -188,13 +245,15 @@ export default function PostPage() {
                                 </div>
                               )}
                               <Input id="dropzone-file" type="file" className="hidden" 
+                                {...rest}
                                 onChange={(e) => {
                                   const file = e.target.files?.[0];
-                                  field.onChange(file);
                                   if (file) {
-                                      setImagePreview(URL.createObjectURL(file));
+                                    onChange(file);
+                                    setImagePreview(URL.createObjectURL(file));
                                   } else {
-                                      setImagePreview(null);
+                                    onChange(null);
+                                    setImagePreview(null);
                                   }
                               }}
                               />

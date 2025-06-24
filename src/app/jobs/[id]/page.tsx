@@ -1,12 +1,17 @@
-import { jobs } from '@/lib/data';
+"use client"
+
 import { notFound } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Star, Hammer, Calendar, Wallet, FileText, ChevronLeft, Zap, Wrench, Code, PaintRoller, Users, TrendingUp, Sprout } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import * as React from 'react';
 import Image from 'next/image';
+import { db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import type { Job } from '@/lib/data';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const iconMap: { [key: string]: React.ElementType } = {
   Hammer,
@@ -17,14 +22,87 @@ const iconMap: { [key: string]: React.ElementType } = {
   Users,
   TrendingUp,
   Sprout,
+  carpentry: Hammer,
+  electricity: Zap,
+  plumbing: Wrench,
+  design: PaintRoller,
+  development: Code,
+  other: Hammer,
   Default: Hammer,
 };
 
 export default function JobDetailPage({ params }: { params: { id: string } }) {
-  const job = jobs.find(j => j.id.toString() === params.id);
+  const [job, setJob] = React.useState<Job | null>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    if (!params.id) return;
+
+    const fetchJob = async () => {
+      setLoading(true);
+      const docRef = doc(db, 'ads', params.id);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setJob({
+          id: docSnap.id,
+          title: data.title,
+          city: data.city,
+          price: data.price,
+          rating: data.rating || 4.5,
+          featured: data.featured || false,
+          icon: data.category || 'Default',
+          image: data.imageUrl,
+          description: data.description,
+          responsibilities: data.responsibilities,
+        } as any); // Using 'any' to accommodate extra fields like description
+      } else {
+        notFound();
+      }
+      setLoading(false);
+    };
+
+    fetchJob();
+  }, [params.id]);
+
+
+  if (loading) {
+    return (
+      <div className="p-4 md:p-6 max-w-3xl mx-auto">
+        <Skeleton className="h-8 w-48 mb-4" />
+        <Card>
+          <Skeleton className="h-64 w-full" />
+          <CardHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <Skeleton className="w-16 h-16 rounded-lg" />
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-64" />
+                <Skeleton className="h-4 w-32" />
+              </div>
+            </div>
+            <div className="flex items-center gap-4 pt-4 border-t mt-4 flex-wrap">
+              <Skeleton className="h-6 w-24" />
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-6 w-28" />
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <Skeleton className="h-6 w-48 mb-2" />
+            <Skeleton className="h-20 w-full" />
+             <Skeleton className="h-6 w-32 mb-2" />
+            <Skeleton className="h-24 w-full" />
+            <div className="mt-8 pt-6 border-t text-center">
+              <Skeleton className="h-12 w-48 mx-auto" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (!job) {
-    notFound();
+    return notFound();
   }
 
   const IconComponent = iconMap[job.icon] || Hammer;
@@ -80,7 +158,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                 <div>
                     <h3 className="font-bold text-lg mb-2 flex items-center gap-2"><FileText className="text-primary"/> وصف الوظيفة</h3>
                     <p className="text-muted-foreground leading-relaxed">
-                        نبحث عن نجار محترف وموهوب للانضمام إلى فريقنا. يجب أن يكون لديك خبرة في تصنيع وتركيب الأبواب والنوافذ والأثاث الخشبي. القدرة على قراءة المخططات والعمل بدقة هي أمور ضرورية.
+                        {(job as any).description || "لا يوجد وصف متوفر."}
                     </p>
                 </div>
                  <div>

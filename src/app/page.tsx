@@ -18,16 +18,75 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Search, ChevronLeft } from "lucide-react"
-import { jobs, sliderItems, workers } from '@/lib/data';
+import { sliderItems } from '@/lib/data';
+import type { Job, Worker } from '@/lib/data';
 import Link from 'next/link';
 import HomeHeader from '@/components/home-header';
 import JobCard from '@/components/job-card';
 import WorkerCard from '@/components/worker-card';
+import { collection, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Home() {
   const plugin = React.useRef(
     Autoplay({ delay: 4000, stopOnInteraction: true })
   )
+
+  const [jobs, setJobs] = React.useState<Job[]>([]);
+  const [workers, setWorkers] = React.useState<Worker[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            // Fetch jobs (ads of type 'job')
+            const jobsQuery = query(collection(db, "ads"), where("type", "==", "job"), orderBy("createdAt", "desc"), limit(4));
+            const jobsSnapshot = await getDocs(jobsQuery);
+            const fetchedJobs = jobsSnapshot.docs.map(doc => {
+              const data = doc.data();
+              return {
+                  id: doc.id,
+                  title: data.title,
+                  city: data.city,
+                  price: data.price,
+                  rating: data.rating || 4.5,
+                  featured: data.featured || false,
+                  icon: data.category || 'Hammer',
+                  image: data.imageUrl,
+              } as Job;
+            });
+            setJobs(fetchedJobs);
+            
+            // Fetch workers (ads of type 'worker', but display user profiles)
+            // A more robust solution would be to link worker ads to user profiles.
+            // For now, we fetch user profiles directly as "workers".
+            const usersQuery = query(collection(db, "users"), limit(4));
+            const usersSnapshot = await getDocs(usersQuery);
+            const fetchedWorkers = usersSnapshot.docs.map(doc => {
+              const data = doc.data();
+              return {
+                id: doc.id,
+                name: data.name,
+                avatar: data.avatar || `https://placehold.co/100x100.png`,
+                'data-ai-hint': 'person face',
+                title: data.title || 'باحث عن عمل',
+                city: data.city || 'غير محدد',
+                rating: data.rating || 4.5,
+              } as Worker
+            });
+            setWorkers(fetchedWorkers);
+
+        } catch (error) {
+            console.error("Error fetching homepage data: ", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+    fetchData();
+}, []);
+
 
   return (
     <div className="flex flex-col w-full">
@@ -91,11 +150,19 @@ export default function Home() {
           </Link>
         </div>
         <div className="flex overflow-x-auto gap-4 px-4 pb-4 scrollbar-hide">
-          {jobs.map(job => (
-            <div key={job.id} className="flex-shrink-0 w-2/3 md:w-1/4">
-              <JobCard job={job} />
-            </div>
-          ))}
+          {loading ? (
+             [...Array(4)].map((_, i) => (
+                <div key={i} className="flex-shrink-0 w-2/3 md:w-1/4">
+                  <Skeleton className="h-60 w-full" />
+                </div>
+              ))
+          ) : (
+            jobs.map(job => (
+              <div key={job.id} className="flex-shrink-0 w-2/3 md:w-1/4">
+                <JobCard job={job} />
+              </div>
+            ))
+          )}
         </div>
       </section>
 
@@ -108,11 +175,19 @@ export default function Home() {
           </Link>
         </div>
         <div className="flex overflow-x-auto gap-4 px-4 pb-4 scrollbar-hide">
-          {workers.map(worker => (
-            <div key={worker.id} className="flex-shrink-0 w-2/3 md:w-1/4">
-              <WorkerCard worker={worker} />
-            </div>
-          ))}
+          {loading ? (
+             [...Array(4)].map((_, i) => (
+                <div key={i} className="flex-shrink-0 w-2/3 md:w-1/4">
+                  <Skeleton className="h-48 w-full" />
+                </div>
+              ))
+          ) : (
+            workers.map(worker => (
+              <div key={worker.id} className="flex-shrink-0 w-2/3 md:w-1/4">
+                <WorkerCard worker={worker} />
+              </div>
+            ))
+          )}
         </div>
       </section>
 

@@ -9,48 +9,96 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+import { auth, db } from '@/lib/firebase';
+import type { User } from 'firebase/auth';
+import { addDoc, collection, onSnapshot, orderBy, query, serverTimestamp } from 'firebase/firestore';
 
-// Dummy data for the chat
-const chatPartner = {
-  name: "أحمد العلوي",
-  avatar: "https://placehold.co/40x40.png",
-  online: true,
-};
-
-const initialMessages = [
-  { id: 1, sender: 'other', text: 'مرحباً، هل يمكننا مناقشة تفاصيل المشروع؟', time: '10:45 ص' },
-  { id: 2, sender: 'me', text: 'أهلاً بك. بالتأكيد، أنا جاهز.', time: '10:46 ص' },
-  { id: 3, sender: 'other', text: 'ممتاز. المشروع هو تصميم وتركيب خزانة ملابس كبيرة.', time: '10:47 ص' },
-  { id: 4, sender: 'me', text: 'فهمت. هل لديك أبعاد معينة أو تصميم في ذهنك؟', time: '10:48 ص' },
-  { id: 5, sender: 'other', text: 'نعم، سأرسل لك المخطط الآن.', time: '10:48 ص' },
-];
-
+interface Message {
+  id: string;
+  sender: 'me' | 'other';
+  text: string;
+  time: string;
+}
 
 export default function ChatPage() {
-    const [messages, setMessages] = React.useState(initialMessages);
+    const { toast } = useToast();
+    const [messages, setMessages] = React.useState<Message[]>([]);
     const [newMessage, setNewMessage] = React.useState("");
+    const [user, setUser] = React.useState<User | null>(null);
     const scrollAreaRef = React.useRef<HTMLDivElement>(null);
 
-    const handleSendMessage = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (newMessage.trim() === "") return;
-        
-        const newMsg = {
-            id: messages.length + 1,
-            sender: 'me',
-            text: newMessage,
-            time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
-        };
-        
-        setMessages([...messages, newMsg]);
-        setNewMessage("");
-    }
+    // This is a placeholder for the chat partner. 
+    // In a real app, this would be dynamic based on which user you select to chat with.
+    const chatPartner = {
+      id: "mockPartnerId123", // A unique mock ID for the chat partner
+      name: "أحمد العلوي",
+      avatar: "https://placehold.co/40x40.png",
+      online: true,
+    };
+
+    React.useEffect(() => {
+        const unsubscribeAuth = auth.onAuthStateChanged(currentUser => {
+            setUser(currentUser);
+        });
+        return () => unsubscribeAuth();
+    }, []);
 
     React.useEffect(() => {
         if (scrollAreaRef.current) {
-            scrollAreaRef.current.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: 'smooth' });
+            scrollAreaRef.current.scrollTo({ top: scrollAreaRef.current.scrollHeight });
         }
     }, [messages]);
+
+    React.useEffect(() => {
+        if (!user) return;
+
+        // Create a consistent chat ID by sorting the user IDs
+        const chatId = [user.uid, chatPartner.id].sort().join('_');
+        const messagesCollection = collection(db, 'chats', chatId, 'messages');
+        const q = query(messagesCollection, orderBy('time', 'asc'));
+
+        const unsubscribeMessages = onSnapshot(q, (snapshot) => {
+            const fetchedMessages = snapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    sender: data.senderId === user.uid ? 'me' : 'other',
+                    text: data.text,
+                    time: data.time?.toDate().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) || ''
+                } as Message;
+            });
+            setMessages(fetchedMessages);
+        });
+
+        return () => unsubscribeMessages();
+    }, [user, chatPartner.id]);
+
+    const handleSendMessage = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (newMessage.trim() === "" || !user) {
+          if (!user) {
+            toast({ variant: 'destructive', title: 'يجب تسجيل الدخول لإرسال رسالة' });
+          }
+          return;
+        }
+        
+        const chatId = [user.uid, chatPartner.id].sort().join('_');
+        const messagesCollection = collection(db, 'chats', chatId, 'messages');
+
+        try {
+            await addDoc(messagesCollection, {
+                text: newMessage,
+                senderId: user.uid,
+                receiverId: chatPartner.id,
+                time: serverTimestamp(),
+            });
+            setNewMessage("");
+        } catch (error) {
+            console.error("Error sending message: ", error);
+            toast({ variant: 'destructive', title: 'فشل إرسال الرسالة' });
+        }
+    }
 
   return (
     <div className="flex flex-col h-full">
@@ -115,7 +163,7 @@ export default function ChatPage() {
                 className="flex-1"
                 dir="rtl"
             />
-            <Button type="submit" size="icon" className="flex-shrink-0">
+            <Button type="submit" size="icon" className="flex-shrink-0" disabled={!user}>
                 <Send className="h-5 w-5" />
             </Button>
         </form>

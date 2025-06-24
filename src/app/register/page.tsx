@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -15,9 +16,12 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { toast } from "@/hooks/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Handshake } from "lucide-react"
+import { auth, db } from "@/lib/firebase"
+import { createUserWithEmailAndPassword } from "firebase/auth"
+import { setDoc, doc } from "firebase/firestore"
 
 const formSchema = z.object({
     name: z.string().min(2, { message: "يجب أن يكون الاسم حرفين على الأقل." }),
@@ -26,6 +30,8 @@ const formSchema = z.object({
 })
 
 export default function RegisterPage() {
+  const router = useRouter();
+  const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -35,13 +41,32 @@ export default function RegisterPage() {
     },
   })
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values)
-    toast({
-      title: "تم إنشاء حسابك بنجاح!",
-      description: "يمكنك الآن تسجيل الدخول.",
-    })
-    // Here you would typically handle the registration logic
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const user = userCredential.user;
+
+      await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        name: values.name,
+        email: values.email,
+        phone: "",
+        createdAt: new Date(),
+      });
+
+      toast({
+        title: "تم إنشاء حسابك بنجاح!",
+        description: "يتم توجيهك الآن...",
+      });
+      router.push('/');
+    } catch (error: any) {
+      console.error("Error signing up:", error);
+      toast({
+        variant: "destructive",
+        title: "حدث خطأ أثناء التسجيل.",
+        description: error.message,
+      });
+    }
   }
 
   return (
