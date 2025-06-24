@@ -1,10 +1,10 @@
+
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, type FieldErrors } from "react-hook-form"
 import * as z from "zod"
 import * as React from "react"
-import Image from "next/image"
 import { useRouter } from "next/navigation"
 import type { User } from "firebase/auth"
 
@@ -30,13 +30,13 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
-import { Briefcase, UserPlus, Upload, Loader2 } from "lucide-react"
+import { Briefcase, UserPlus, Loader2 } from "lucide-react"
 import PageHeader from "@/components/page-header"
-import { auth, db, storage } from "@/lib/firebase"
+import { auth, db } from "@/lib/firebase"
 import { addDoc, collection, doc, getDoc, serverTimestamp } from "firebase/firestore"
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
 import { onAuthStateChanged } from "firebase/auth"
 import { Skeleton } from "@/components/ui/skeleton"
+import { professions } from "@/lib/professions"
 
 const formSchema = z.object({
   type: z.enum(["job", "worker"], {
@@ -47,11 +47,9 @@ const formSchema = z.object({
   description: z.string().min(10, "يجب أن يكون الوصف 10 أحرف على الأقل.").max(500, "يجب أن يكون الوصف 500 حرف على الأكثر."),
   city: z.string().min(2, "يجب إدخال اسم المدينة."),
   price: z.string().optional(),
-  image: z.any().optional(),
 })
 
 export default function PostPage() {
-  const [imagePreview, setImagePreview] = React.useState<string | null>(null)
   const router = useRouter()
   const { toast } = useToast()
   const [user, setUser] = React.useState<User | null>(null)
@@ -102,22 +100,6 @@ export default function PostPage() {
     toast({ title: "جاري نشر إعلانك..." });
 
     try {
-        let imageUrl = "";
-        if (values.image && values.image instanceof File) {
-            const file = values.image;
-            const storageRef = ref(storage, `ads/${user.uid}/${Date.now()}_${file.name}`);
-            try {
-                const snapshot = await uploadBytes(storageRef, file);
-                imageUrl = await getDownloadURL(snapshot.ref);
-            } catch (storageError: any) {
-                console.error("Firebase Storage Error: ", storageError);
-                if (storageError.code === 'storage/unauthorized') {
-                   throw new Error("فشل رفع الصورة بسبب خطأ في الصلاحيات. يرجى مراجعة قواعد الأمان في Firebase Storage.");
-                }
-                throw new Error("فشل رفع الصورة: " + storageError.message);
-            }
-        }
-
         const userDocRef = doc(db, 'users', user.uid);
         const userDocSnap = await getDoc(userDocRef);
         
@@ -136,7 +118,6 @@ export default function PostPage() {
             description: values.description,
             city: values.city,
             price: values.price || "",
-            imageUrl: imageUrl,
             createdAt: serverTimestamp(),
             featured: false,
             rating: 0,
@@ -147,7 +128,6 @@ export default function PostPage() {
             description: "يمكنك الآن رؤيته في ملفك الشخصي.",
         });
         form.reset();
-        setImagePreview(null);
         router.push('/account');
 
     } catch (error: any) {
@@ -198,7 +178,6 @@ export default function PostPage() {
                             <Skeleton className="h-4 w-1/4" />
                             <Skeleton className="h-24 w-full" />
                         </div>
-                        <Skeleton className="h-48 w-full" />
                         <Skeleton className="h-10 w-full mt-8" />
                     </CardContent>
                 </Card>
@@ -269,7 +248,7 @@ export default function PostPage() {
                   name="category"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>الفئة</FormLabel>
+                      <FormLabel>الفئة / الحرفة</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -277,15 +256,9 @@ export default function PostPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="construction">بناء</SelectItem>
-                          <SelectItem value="cleaning">تنظيف</SelectItem>
-                          <SelectItem value="childcare">رعاية أطفال</SelectItem>
-                          <SelectItem value="carpentry">نجارة</SelectItem>
-                          <SelectItem value="electricity">كهرباء</SelectItem>
-                          <SelectItem value="plumbing">سباكة</SelectItem>
-                          <SelectItem value="design">تصميم</SelectItem>
-                          <SelectItem value="development">برمجة وتطوير</SelectItem>
-                          <SelectItem value="other">أخرى</SelectItem>
+                          {professions.map(prof => (
+                            <SelectItem key={prof.value} value={prof.value}>{prof.label}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -311,41 +284,6 @@ export default function PostPage() {
                   )}
                 />
                 
-                <FormField
-                  control={form.control}
-                  name="image"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>إضافة صورة (اختياري)</FormLabel>
-                      <FormControl>
-                        <div className="flex items-center justify-center w-full">
-                          <label htmlFor="dropzone-file" className="relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted">
-                              {imagePreview ? (
-                                <Image src={imagePreview} alt="Image Preview" layout="fill" className="object-contain rounded-lg p-2" />
-                              ) : (
-                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                    <Upload className="w-10 h-10 mb-3 text-muted-foreground" />
-                                    <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">انقر للتحميل</span> أو اسحب وأفلت</p>
-                                    <p className="text-xs text-muted-foreground">SVG, PNG, JPG</p>
-                                </div>
-                              )}
-                              <Input id="dropzone-file" type="file" className="hidden" 
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) {
-                                    field.onChange(file);
-                                    setImagePreview(URL.createObjectURL(file));
-                                  }
-                              }}
-                              />
-                          </label>
-                        </div> 
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <FormField
                     control={form.control}
@@ -397,3 +335,5 @@ export default function PostPage() {
     </div>
   )
 }
+
+    

@@ -1,3 +1,4 @@
+
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -13,6 +14,13 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
@@ -26,10 +34,11 @@ import { doc, getDoc, updateDoc } from "firebase/firestore"
 import { auth, db } from "@/lib/firebase"
 import type { User as FirebaseUser } from 'firebase/auth';
 import { Skeleton } from "@/components/ui/skeleton"
+import { professions } from "@/lib/professions"
 
 const profileFormSchema = z.object({
   name: z.string().min(2, { message: "الاسم يجب أن يكون حرفين على الأقل." }),
-  title: z.string().min(2, { message: "يجب أن يكون المسمى الوظيفي حرفين على الأقل." }),
+  title: z.string({ required_error: "الرجاء اختيار حرفتك أو مهنتك." }).min(1, { message: "الرجاء اختيار حرفتك أو مهنتك." }),
   location: z.string().min(2, { message: "يجب إدخال الموقع." }),
   email: z.string().email({ message: "الرجاء إدخال بريد إلكتروني صحيح." }),
   phone: z.string().min(10, { message: "الرجاء إدخال رقم هاتف صحيح." }),
@@ -101,7 +110,7 @@ export default function EditAccountPage() {
                     bio: userData.bio || '',
                     skills: (userData.skills || []).join(', '),
                 });
-                setAvatarUrl(userData.avatar || null);
+                setAvatarUrl(userData.avatar || `https://api.dicebear.com/8.x/adventurer/svg?seed=${userData.email}`);
             }
         } else {
             router.replace('/login');
@@ -171,7 +180,7 @@ export default function EditAccountPage() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               
               <FormItem>
-                <FormLabel>الصورة الشخصية</FormLabel>
+                <FormLabel>الصورة الرمزية</FormLabel>
                 <FormControl>
                     <div className="flex items-center gap-4">
                     {avatarUrl && <Image 
@@ -205,10 +214,19 @@ export default function EditAccountPage() {
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2"><Briefcase className="h-4 w-4" /> المسمى الوظيفي</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
+                      <FormLabel className="flex items-center gap-2"><Briefcase className="h-4 w-4" /> الحرفة أو المهنة</FormLabel>
+                       <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="اختر حرفتك أو مهنتك" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {professions.map(prof => (
+                            <SelectItem key={prof.value} value={prof.value}>{prof.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -319,3 +337,5 @@ export default function EditAccountPage() {
     </div>
   )
 }
+
+    

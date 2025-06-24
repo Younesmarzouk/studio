@@ -1,3 +1,4 @@
+
 export type SliderItem = {
   title: string;
   description: string;
@@ -13,8 +14,6 @@ export type Job = {
   rating: number;
   featured: boolean;
   icon: string;
-  image?: string;
-  "data-ai-hint"?: string;
 };
 
 export type Worker = {
@@ -23,8 +22,7 @@ export type Worker = {
   title: string;
   city: string;
   rating: number;
-  avatar: string;
-  'data-ai-hint': string;
+  icon: string;
 };
 
 
@@ -57,9 +55,7 @@ export const jobs: Job[] = [
     price: "200 درهم/اليوم",
     rating: 4.7,
     featured: true,
-    icon: "Hammer",
-    image: "https://placehold.co/600x400.png",
-    "data-ai-hint": "carpentry tools",
+    icon: "carpentry",
   },
   {
     id: 2,
@@ -68,7 +64,7 @@ export const jobs: Job[] = [
     price: "حسب الخدمة",
     rating: 4.5,
     featured: false,
-    icon: "Zap",
+    icon: "electricity",
   },
    {
     id: 3,
@@ -77,7 +73,7 @@ export const jobs: Job[] = [
     price: "150 درهم/اليوم",
     rating: 4.2,
     featured: false,
-    icon: "Wrench",
+    icon: "plumbing",
   },
    {
     id: 4,
@@ -86,9 +82,7 @@ export const jobs: Job[] = [
     price: "500 درهم/اليوم",
     rating: 4.9,
     featured: true,
-    icon: "Code",
-    image: "https://placehold.co/600x400.png",
-    "data-ai-hint": "laptop code",
+    icon: "development",
   },
 ];
 
@@ -99,8 +93,7 @@ export const workers: Worker[] = [
     title: "مصمم جرافيك",
     city: "الدار البيضاء",
     rating: 4.8,
-    avatar: "https://placehold.co/100x100.png",
-    'data-ai-hint': 'graphic designer face',
+    icon: "design",
   },
   {
     id: 2,
@@ -108,17 +101,15 @@ export const workers: Worker[] = [
     title: "مترجمة",
     city: "الرباط",
     rating: 4.9,
-    avatar: "https://placehold.co/100x100.png",
-    'data-ai-hint': 'translator woman face',
+    icon: "other", // No specific icon for translator in the new list
   },
   {
     id: 3,
     name: "محمد أمين",
-    title: "مساعد افتراضي",
+    title: "مساعد إداري",
     city: "عن بعد",
     rating: 4.6,
-    avatar: "https://placehold.co/100x100.png",
-    'data-ai-hint': 'man face',
+    icon: "admin_assistant",
   },
   {
     id: 4,
@@ -126,7 +117,8 @@ export const workers: Worker[] = [
     title: "طباخة منزلية",
     city: "مراكش",
     rating: 4.7,
-    avatar: "https://placehold.co/100x100.png",
-    'data-ai-hint': 'cook woman face',
+    icon: "cooking",
   },
 ];
+
+    

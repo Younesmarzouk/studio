@@ -27,6 +27,7 @@ import WorkerCard from '@/components/worker-card';
 import { collection, getDocs, limit, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getProfessionByValue } from '@/lib/professions';
 
 export default function Home() {
   const plugin = React.useRef(
@@ -57,8 +58,7 @@ export default function Home() {
                         price: data.price,
                         rating: data.rating || 4.5,
                         featured: data.featured || false,
-                        icon: data.category || 'Hammer',
-                        image: data.imageUrl,
+                        icon: data.category || 'other',
                     } as Job;
                 });
             setJobs(fetchedJobs);
@@ -68,12 +68,12 @@ export default function Home() {
             const usersSnapshot = await getDocs(usersQuery);
             const fetchedWorkers = usersSnapshot.docs.map(doc => {
               const data = doc.data();
+              const profession = getProfessionByValue(data.title);
               return {
                 id: doc.id,
                 name: data.name,
-                avatar: data.avatar || `https://placehold.co/100x100.png`,
-                'data-ai-hint': 'person face',
-                title: data.title || 'باحث عن عمل',
+                title: profession?.label || data.title || 'باحث عن عمل',
+                icon: profession?.value || 'other',
                 city: data.location || 'غير محدد',
                 rating: data.rating || 4.5,
               } as Worker
@@ -155,7 +155,7 @@ export default function Home() {
           {loading ? (
              [...Array(4)].map((_, i) => (
                 <div key={i} className="flex-shrink-0 w-2/3 md:w-1/4">
-                  <Skeleton className="h-60 w-full" />
+                  <Skeleton className="h-60 w-full rounded-lg" />
                 </div>
               ))
           ) : (
@@ -196,3 +196,5 @@ export default function Home() {
     </div>
   )
 }
+
+    

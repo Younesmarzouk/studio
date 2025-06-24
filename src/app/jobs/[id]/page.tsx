@@ -1,18 +1,19 @@
+
 "use client"
 
 import { notFound, useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Star, Hammer, Calendar, Wallet, FileText, ChevronLeft, Zap, Wrench, Code, PaintRoller, Users, Sprout, Phone, Trash2, Baby } from 'lucide-react';
+import { MapPin, Star, Calendar, Wallet, FileText, ChevronLeft, Phone, User as UserIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import * as React from 'react';
-import Image from 'next/image';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import type { Job } from '@/lib/data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { iconMap } from '@/lib/professions';
 
 type Ad = Job & {
     description?: string;
@@ -21,28 +22,6 @@ type Ad = Job & {
     userName?: string;
     userAvatar?: string;
     userPhone?: string;
-};
-
-const iconMap: { [key: string]: React.ElementType } = {
-  Hammer,
-  Zap,
-  Wrench,
-  Code,
-  PaintRoller,
-  Users,
-  Sprout,
-  Trash2,
-  Baby,
-  construction: Hammer,
-  cleaning: Trash2,
-  childcare: Baby,
-  carpentry: Hammer,
-  electricity: Zap,
-  plumbing: Wrench,
-  design: PaintRoller,
-  development: Code,
-  other: Hammer,
-  Default: Hammer,
 };
 
 export default function JobDetailPage() {
@@ -70,15 +49,16 @@ export default function JobDetailPage() {
               setJob({ 
                   id: docSnap.id, 
                   ...data,
+                  icon: data.category || 'other',
                   userName: userData.name,
                   userAvatar: userData.avatar,
                   userPhone: userData.phone,
               } as Ad);
           } else {
-               setJob({ id: docSnap.id, ...data } as Ad);
+               setJob({ id: docSnap.id, ...data, icon: data.category || 'other' } as Ad);
           }
         } else {
-            setJob({ id: docSnap.id, ...data } as Ad);
+            setJob({ id: docSnap.id, ...data, icon: data.category || 'other' } as Ad);
         }
       } else {
         setJob(null);
@@ -94,10 +74,9 @@ export default function JobDetailPage() {
       <div className="p-4 md:p-6 max-w-3xl mx-auto">
         <Skeleton className="h-8 w-48 mb-4" />
         <Card>
-          <Skeleton className="h-64 w-full" />
           <CardHeader>
-            <div className="flex items-center gap-3 mb-2">
-              <Skeleton className="w-16 h-16 rounded-lg" />
+            <div className="flex items-center gap-4 mb-2">
+              <Skeleton className="w-24 h-24 rounded-full" />
               <div className="space-y-2">
                 <Skeleton className="h-8 w-64" />
                 <Skeleton className="h-4 w-32" />
@@ -127,7 +106,7 @@ export default function JobDetailPage() {
     return notFound();
   }
 
-  const IconComponent = iconMap[job.icon || 'Default'] || Hammer;
+  const IconComponent = iconMap[job.icon] || UserIcon;
 
   return (
     <div className="p-4 md:p-6 max-w-3xl mx-auto">
@@ -135,29 +114,22 @@ export default function JobDetailPage() {
             <ChevronLeft className="h-4 w-4" />
             العودة إلى كل الوظائف
         </Link>
-      <Card>
-        {job.image && (
-          <div className="relative h-64 w-full">
-            <Image src={job.image} alt={job.title} layout="fill" className="object-cover" data-ai-hint={job['data-ai-hint']} />
-          </div>
-        )}
+      <Card className="overflow-hidden">
         <CardHeader>
-          <div className="flex justify-between items-start">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-16 h-16 rounded-lg bg-accent flex items-center justify-center flex-shrink-0">
-                    <IconComponent className="h-8 w-8 text-accent-foreground" />
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+            <div className="flex items-center gap-4">
+                <div className="w-24 h-24 rounded-full bg-accent flex items-center justify-center flex-shrink-0">
+                    <IconComponent className="h-12 w-12 text-accent-foreground" />
                 </div>
                 <div>
-                    <CardTitle className="text-2xl">{job.title}</CardTitle>
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <MapPin className="h-4 w-4" />
+                    <CardTitle className="text-2xl mb-1">{job.title}</CardTitle>
+                    <div className="flex items-center gap-1 text-base text-muted-foreground">
+                        <MapPin className="h-5 w-5" />
                         <span>{job.city}</span>
                     </div>
                 </div>
-              </div>
             </div>
-            {job.featured && <Badge variant="secondary" className="bg-green-100 text-green-800">مميز</Badge>}
+            {job.featured && <Badge variant="secondary" className="bg-green-100 text-green-800 self-start sm:self-center">مميز</Badge>}
           </div>
            <div className="flex items-center gap-4 pt-4 border-t mt-4 flex-wrap">
              <div className="flex items-center gap-1">
@@ -239,3 +211,5 @@ export default function JobDetailPage() {
     </div>
   );
 }
+
+    

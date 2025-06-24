@@ -1,3 +1,4 @@
+
 "use client"
 
 import JobCard from '@/components/job-card';
@@ -36,8 +37,7 @@ export default function JobsPage() {
                         price: data.price,
                         rating: data.rating || 4.5,
                         featured: data.featured || false,
-                        icon: data.category || 'Hammer',
-                        image: data.imageUrl,
+                        icon: data.category || 'other',
                     } as Job;
                 });
               setJobs(fetchedJobs);
@@ -60,7 +60,7 @@ export default function JobsPage() {
                     <Skeleton className="h-12 flex-grow rounded-xl" />
                     <Skeleton className="h-12 w-12 rounded-md" />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-64 w-full rounded-lg" />)}
                 </div>
             </div>
@@ -90,7 +90,7 @@ export default function JobsPage() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {jobs.map(job => (
             <div key={job.id} className="w-full">
               <JobCard job={job} />
@@ -101,3 +101,5 @@ export default function JobsPage() {
     </div>
   );
 }
+
+    

@@ -1,3 +1,4 @@
+
 "use client"
 
 import WorkerCard from '@/components/worker-card';
@@ -10,6 +11,7 @@ import { useEffect, useState } from 'react';
 import { collection, getDocs, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getProfessionByValue } from '@/lib/professions';
 
 export default function WorkersPage() {
   const [workers, setWorkers] = useState<Worker[]>([]);
@@ -24,12 +26,12 @@ export default function WorkersPage() {
               const querySnapshot = await getDocs(q);
               const fetchedWorkers = querySnapshot.docs.map(doc => {
                   const data = doc.data();
+                  const profession = getProfessionByValue(data.title);
                   return {
                     id: doc.id,
                     name: data.name,
-                    avatar: data.avatar || `https://placehold.co/100x100.png`,
-                    'data-ai-hint': 'person face',
-                    title: data.title || 'باحث عن عمل',
+                    title: profession?.label || data.title || 'باحث عن عمل',
+                    icon: profession?.value || 'other',
                     city: data.location || 'غير محدد',
                     rating: data.rating || 4.5,
                   } as Worker
@@ -84,7 +86,7 @@ export default function WorkersPage() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {workers.map(worker => (
             <div key={worker.id} className="w-full">
               <WorkerCard worker={worker} />
@@ -95,3 +97,5 @@ export default function WorkersPage() {
     </div>
   );
 }
+
+    
