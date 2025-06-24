@@ -1,6 +1,7 @@
 "use client" 
 
 import './globals.css';
+import * as React from 'react';
 import { Toaster } from '@/components/ui/toaster';
 import BottomNav from '@/components/bottom-nav';
 import { usePathname } from 'next/navigation';
