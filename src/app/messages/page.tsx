@@ -12,6 +12,7 @@ import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestor
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import { Button } from '@/components/ui/button';
 
 interface Chat {
   id: string;
@@ -51,10 +52,11 @@ export default function MessagesPage() {
 
     setLoadingChats(true);
     const chatsCollection = collection(db, 'chats');
+    // We only filter by members to avoid needing a composite index.
+    // Sorting will be done on the client-side.
     const q = query(
       chatsCollection,
-      where('members', 'array-contains', user.uid),
-      orderBy('lastMessageTimestamp', 'desc')
+      where('members', 'array-contains', user.uid)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -62,11 +64,16 @@ export default function MessagesPage() {
         id: doc.id,
         ...doc.data()
       } as Chat));
+
+      // Sort chats on the client-side by the last message timestamp
+      fetchedChats.sort((a, b) => 
+        (b.lastMessageTimestamp?.toDate()?.getTime() || 0) - (a.lastMessageTimestamp?.toDate()?.getTime() || 0)
+      );
+      
       setChats(fetchedChats);
       setLoadingChats(false);
     }, (error) => {
       console.error("Error fetching chats: ", error);
-      // This is a common error if the index is not created.
       if (error.code === 'failed-precondition') {
         console.error("Firestore index not found. Please create the required composite index in your Firebase console. The link is usually provided in the browser's console error message.");
       }
@@ -80,6 +87,7 @@ export default function MessagesPage() {
     if (!user) return null;
     const partnerId = chat.members.find(id => id !== user.uid);
     if (!partnerId || !chat.participants[partnerId]) {
+      // This can happen if a user deletes their account
       return { name: "مستخدم محذوف", avatar: "" };
     }
     return chat.participants[partnerId];
@@ -121,17 +129,17 @@ export default function MessagesPage() {
                             <AvatarImage src={partnerAvatar} alt={partnerInfo.name} data-ai-hint="person face" />
                             <AvatarFallback>{partnerInfo.name.charAt(0)}</AvatarFallback>
                           </Avatar>
-                          <div className="flex-1">
+                          <div className="flex-1 overflow-hidden">
                             <div className="flex justify-between items-center">
-                              <h3 className="font-bold">{partnerInfo.name}</h3>
+                              <h3 className="font-bold truncate">{partnerInfo.name}</h3>
                               {chat.lastMessageTimestamp && (
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-xs text-muted-foreground flex-shrink-0 ml-2">
                                   {formatDistanceToNow(chat.lastMessageTimestamp.toDate(), { addSuffix: true, locale: ar })}
                                 </p>
                               )}
                             </div>
                             <div className="flex justify-between items-start">
-                              <p className="text-sm text-muted-foreground truncate w-4/5">{chat.lastMessage}</p>
+                              <p className="text-sm text-muted-foreground truncate w-full">{chat.lastMessage}</p>
                             </div>
                           </div>
                         </div>

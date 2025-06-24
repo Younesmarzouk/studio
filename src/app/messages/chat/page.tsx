@@ -71,32 +71,54 @@ const ChatPageContent = () => {
 
     React.useEffect(() => {
         if (!user || !partnerId) return;
-
         setLoading(true);
-        const chatId = [user.uid, partnerId].sort().join('_');
-        const messagesCollection = collection(db, 'chats', chatId, 'messages');
-        const q = query(messagesCollection, orderBy('time', 'asc'));
 
-        const unsubscribeMessages = onSnapshot(q, (snapshot) => {
-            const fetchedMessages = snapshot.docs.map(doc => {
-                const data = doc.data();
-                return {
-                    id: doc.id,
-                    senderId: data.senderId,
-                    text: data.text,
-                    time: data.time?.toDate().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) || ''
-                } as Message;
-            });
-            setMessages(fetchedMessages);
-            setLoading(false);
+        const chatId = [user.uid, partnerId].sort().join('_');
+        const chatDocRef = doc(db, 'chats', chatId);
+        
+        // This is the listener for the parent chat document.
+        const unsubscribeChat = onSnapshot(chatDocRef, (chatSnap) => {
+            // If the chat document exists, we can safely listen for messages.
+            if (chatSnap.exists()) {
+                const messagesCollection = collection(db, 'chats', chatId, 'messages');
+                const q = query(messagesCollection, orderBy('time', 'asc'));
+
+                // This is the listener for the messages subcollection.
+                const unsubscribeMessages = onSnapshot(q, (msgSnapshot) => {
+                    const fetchedMessages = msgSnapshot.docs.map(doc => {
+                        const data = doc.data();
+                        return {
+                            id: doc.id,
+                            senderId: data.senderId,
+                            text: data.text,
+                            time: data.time?.toDate().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) || ''
+                        } as Message;
+                    });
+                    setMessages(fetchedMessages);
+                    setLoading(false);
+                }, (error) => {
+                    console.error("Error fetching messages:", error);
+                    toast({ variant: 'destructive', title: 'فشل تحميل الرسائل', description: "حدث خطأ أثناء جلب الرسائل. قد يكون بسبب قواعد الأمان." });
+                    setLoading(false);
+                });
+
+                // Return the function to unsubscribe from messages when the parent listener re-runs.
+                return () => unsubscribeMessages();
+            } else {
+                // Chat doesn't exist yet. Clear any existing messages and stop loading.
+                setMessages([]);
+                setLoading(false);
+            }
         }, (error) => {
-            console.error("Error fetching messages:", error);
-            toast({ variant: 'destructive', title: 'فشل تحميل الرسائل', description: "قد تحتاج إلى تحديث قواعد الأمان في Firebase." });
+            console.error("Error subscribing to chat document:", error);
+            toast({ variant: 'destructive', title: 'خطأ في المحادثة', description: "لا يمكن الوصول إلى بيانات المحادثة." });
             setLoading(false);
         });
 
-        return () => unsubscribeMessages();
+        // Return the main unsubscribe function for the chat document.
+        return () => unsubscribeChat();
     }, [user, partnerId, toast]);
+
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -110,14 +132,8 @@ const ChatPageContent = () => {
         const chatDocRef = doc(db, 'chats', chatId);
 
         try {
-            await addDoc(messagesCollection, {
-                text: newMessage,
-                senderId: user.uid,
-                receiverId: partnerId,
-                time: serverTimestamp(),
-            });
-
-            // Update chat document for the conversation list
+            // First, ensure the chat document exists by setting it.
+            // Using set with merge:true is safe and will create or update.
             await setDoc(chatDocRef, {
                 members: [user.uid, partnerId],
                 lastMessage: newMessage,
@@ -133,6 +149,15 @@ const ChatPageContent = () => {
                     }
                 }
             }, { merge: true });
+
+            // Then, add the message to the subcollection.
+            await addDoc(messagesCollection, {
+                text: newMessage,
+                senderId: user.uid,
+                receiverId: partnerId,
+                time: serverTimestamp(),
+            });
+
 
             setNewMessage("");
         } catch (error) {
