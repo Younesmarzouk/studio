@@ -17,6 +17,7 @@ import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import type { Job } from '@/lib/data';
 import JobCard from '@/components/job-card';
+import type { User as FirebaseUser } from 'firebase/auth';
 
 const AccountPageSkeleton = () => (
     <div>
