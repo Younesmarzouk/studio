@@ -143,13 +143,20 @@ export default function PostPage() {
         form.reset();
         setImagePreview(null);
         router.push('/jobs');
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error posting ad: ", error);
-        const errorMessage = error instanceof Error ? error.message : "حدث خطأ غير متوقع.";
+        
+        let description = "حدث خطأ غير متوقع أثناء الحفظ.";
+        if (error.code === 'permission-denied') {
+            description = "فشلت العملية بسبب قواعد الأمان. يرجى التأكد من أن لديك الصلاحية للكتابة في قاعدة البيانات.";
+        } else if (error instanceof Error) {
+            description = error.message;
+        }
+
         toast({
             variant: "destructive",
             title: "فشل نشر الإعلان",
-            description: `حدث خطأ أثناء الحفظ: ${errorMessage}`,
+            description: description,
         });
     } finally {
         setIsSubmitting(false);
