@@ -20,7 +20,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Handshake } from "lucide-react"
 import { auth, db } from "@/lib/firebase"
 import { createUserWithEmailAndPassword } from "firebase/auth"
-import { setDoc, doc } from "firebase/firestore"
+import { setDoc, doc, serverTimestamp } from "firebase/firestore"
 
 const formSchema = z.object({
     name: z.string().min(2, { message: "يجب أن يكون الاسم حرفين على الأقل." }),
@@ -49,7 +49,15 @@ export default function RegisterPage() {
         name: values.name,
         email: values.email,
         phone: "",
-        createdAt: new Date(),
+        title: "باحث عن عمل",
+        location: "غير محدد",
+        bio: "",
+        avatar: `https://placehold.co/128x128.png`,
+        skills: [],
+        experience: [],
+        certifications: [],
+        portfolio: [],
+        createdAt: serverTimestamp(),
       });
 
       toast({
@@ -62,7 +70,7 @@ export default function RegisterPage() {
       toast({
         variant: "destructive",
         title: "حدث خطأ أثناء التسجيل.",
-        description: error.message,
+        description: error.code === 'auth/email-already-in-use' ? 'هذا البريد الإلكتروني مستخدم بالفعل.' : error.message,
       });
     }
   }

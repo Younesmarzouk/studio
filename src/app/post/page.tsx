@@ -30,7 +30,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
-import { Briefcase, UserPlus, Upload } from "lucide-react"
+import { Briefcase, UserPlus, Upload, Loader2 } from "lucide-react"
 import PageHeader from "@/components/page-header"
 import { auth, db, storage } from "@/lib/firebase"
 import { addDoc, collection, serverTimestamp } from "firebase/firestore"
@@ -48,8 +48,13 @@ const formSchema = z.object({
   }),
   description: z.string().min(10, "يجب أن يكون الوصف 10 أحرف على الأقل.").max(500, "يجب أن يكون الوصف 500 حرف على الأكثر."),
   city: z.string().min(2, "يجب إدخال اسم المدينة."),
-  price: z.string().optional(),
-  image: z.any().optional(),
+  price: z.string().optional().default(""),
+  image: z
+    .instanceof(FileList)
+    .optional()
+    .refine((files) => !files || files.length <= 1, {
+      message: "يمكنك تحميل صورة واحدة فقط.",
+    }),
 })
 
 export default function PostPage() {
@@ -58,6 +63,7 @@ export default function PostPage() {
   const { toast } = useToast()
   const [user, setUser] = React.useState<User | null>(null)
   const [loading, setLoading] = React.useState(true)
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -100,11 +106,12 @@ export default function PostPage() {
         return router.replace("/login");
     }
 
+    setIsSubmitting(true);
     toast({ title: "جاري نشر إعلانك..." });
 
     let imageUrl = "";
-    if (values.image && values.image instanceof File) {
-        const file = values.image as File;
+    if (values.image && values.image.length > 0) {
+        const file = values.image[0];
         const storageRef = ref(storage, `ads/${user.uid}/${Date.now()}_${file.name}`);
         try {
             const snapshot = await uploadBytes(storageRef, file);
@@ -116,6 +123,7 @@ export default function PostPage() {
                 title: "فشل رفع الصورة",
                 description: "حدث خطأ أثناء محاولة رفع الصورة. حاول مرة أخرى.",
             });
+            setIsSubmitting(false);
             return;
         }
     }
@@ -147,6 +155,8 @@ export default function PostPage() {
             title: "فشل نشر الإعلان",
             description: "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
         });
+    } finally {
+        setIsSubmitting(false);
     }
   }
   
@@ -282,7 +292,7 @@ export default function PostPage() {
                 <FormField
                   control={form.control}
                   name="image"
-                  render={({ field: { onChange, onBlur, name, ref } }) => (
+                  render={({ field: { onChange, ...fieldProps } }) => (
                     <FormItem>
                       <FormLabel>إضافة صورة (اختياري)</FormLabel>
                       <FormControl>
@@ -298,16 +308,14 @@ export default function PostPage() {
                                 </div>
                               )}
                               <Input id="dropzone-file" type="file" className="hidden" 
-                                ref={ref}
-                                name={name}
-                                onBlur={onBlur}
+                                {...fieldProps}
                                 onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) {
-                                    onChange(file);
-                                    setImagePreview(URL.createObjectURL(file));
+                                  const files = e.target.files;
+                                  if (files && files.length > 0) {
+                                    onChange(files);
+                                    setImagePreview(URL.createObjectURL(files[0]));
                                   } else {
-                                    onChange(null);
+                                    onChange(undefined);
                                     setImagePreview(null);
                                   }
                               }}
@@ -353,7 +361,16 @@ export default function PostPage() {
                   />
                 </div>
 
-                <Button type="submit" className="w-full">نشر الإعلان</Button>
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                   {isSubmitting ? (
+                        <>
+                            <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                            جاري النشر...
+                        </>
+                    ) : (
+                       "نشر الإعلان"
+                    )}
+                </Button>
               </form>
             </Form>
           </CardContent>
