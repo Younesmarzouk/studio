@@ -89,8 +89,7 @@ export default function PostPage() {
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
+    if (!user) {
         toast({
             variant: "destructive",
             title: "يجب تسجيل الدخول أولاً",
@@ -106,7 +105,7 @@ export default function PostPage() {
         let imageUrl = "";
         if (values.image && values.image instanceof File) {
             const file = values.image;
-            const storageRef = ref(storage, `ads/${currentUser.uid}/${Date.now()}_${file.name}`);
+            const storageRef = ref(storage, `ads/${user.uid}/${Date.now()}_${file.name}`);
             try {
                 const snapshot = await uploadBytes(storageRef, file);
                 imageUrl = await getDownloadURL(snapshot.ref);
@@ -115,11 +114,11 @@ export default function PostPage() {
                 if (storageError.code === 'storage/unauthorized') {
                    throw new Error("فشل رفع الصورة بسبب خطأ في الصلاحيات. يرجى مراجعة قواعد الأمان في Firebase Storage.");
                 }
-                throw storageError; // Re-throw other storage errors
+                throw new Error("فشل رفع الصورة: " + storageError.message);
             }
         }
 
-        const userDocRef = doc(db, 'users', currentUser.uid);
+        const userDocRef = doc(db, 'users', user.uid);
         const userDocSnap = await getDoc(userDocRef);
         
         if (!userDocSnap.exists()) {
@@ -128,7 +127,7 @@ export default function PostPage() {
         const userData = userDocSnap.data();
 
         await addDoc(collection(db, "ads"), {
-            userId: currentUser.uid,
+            userId: user.uid,
             userName: userData.name,
             userAvatar: userData.avatar,
             type: values.type,
@@ -154,9 +153,11 @@ export default function PostPage() {
     } catch (error: any) {
         console.error("Detailed error posting ad: ", error);
         
-        let description = error.message || "حدث خطأ غير متوقع أثناء الحفظ.";
+        let description = "حدث خطأ غير متوقع أثناء الحفظ.";
         if (error.code === 'permission-denied') {
             description = "فشل حفظ بيانات الإعلان بسبب عدم وجود صلاحيات كافية في Firestore. يرجى مراجعة قواعد الأمان.";
+        } else if (error.message) {
+            description = error.message;
         }
 
         toast({

@@ -63,18 +63,22 @@ export default function JobDetailPage() {
 
       if (docSnap.exists()) {
         const data = docSnap.data();
-        const userRef = doc(db, 'users', data.userId);
-        const userSnap = await getDoc(userRef);
-        if (userSnap.exists()) {
-            const userData = userSnap.data();
-            setJob({ 
-                id: docSnap.id, 
-                ...data,
-                userName: userData.name,
-                userAvatar: userData.avatar,
-            } as Ad);
+        if (data.userId) {
+          const userRef = doc(db, 'users', data.userId);
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+              const userData = userSnap.data();
+              setJob({ 
+                  id: docSnap.id, 
+                  ...data,
+                  userName: userData.name,
+                  userAvatar: userData.avatar,
+              } as Ad);
+          } else {
+               setJob({ id: docSnap.id, ...data } as Ad);
+          }
         } else {
-             setJob({ id: docSnap.id, ...data } as Ad);
+            setJob({ id: docSnap.id, ...data } as Ad);
         }
       } else {
         setJob(null);
@@ -100,6 +104,11 @@ export default function JobDetailPage() {
       return;
     }
     
+    if (user.uid === job.userId) {
+      toast({ title: "هذا إعلانك", description: "لا يمكنك التواصل مع نفسك." });
+      return;
+    }
+
     setIsContacting(true);
     
     try {
@@ -113,7 +122,7 @@ export default function JobDetailPage() {
           const currentUserDocRef = doc(db, 'users', user.uid);
           const currentUserSnap = await getDoc(currentUserDocRef);
           if (!currentUserSnap.exists()) {
-            throw new Error("لم يتم العثور على ملفك الشخصي.");
+            throw new Error("لم يتم العثور على ملفك الشخصي. لا يمكن بدء المحادثة.");
           }
           const currentUserData = currentUserSnap.data();
 
@@ -121,8 +130,8 @@ export default function JobDetailPage() {
               members: [user.uid, partnerId],
               participants: {
                   [user.uid]: {
-                      name: currentUserData.name,
-                      avatar: currentUserData.avatar,
+                      name: currentUserData.name || "مستخدم غير معروف",
+                      avatar: currentUserData.avatar || "",
                   },
                   [partnerId]: {
                       name: job.userName,
@@ -131,6 +140,7 @@ export default function JobDetailPage() {
               },
               createdAt: serverTimestamp(),
               lastMessageTimestamp: serverTimestamp(),
+              lastMessage: "",
           });
       }
 
@@ -138,10 +148,17 @@ export default function JobDetailPage() {
 
     } catch (error: any) {
         console.error("Error creating or navigating to chat:", error);
+        let description = "حدث خطأ ما، يرجى المحاولة مرة أخرى.";
+        if (error.code === 'permission-denied' || error.message.includes('permission-denied')) {
+          description = "فشل بدء المحادثة بسبب عدم وجود صلاحيات كافية. يرجى مراجعة قواعد الأمان في Firestore.";
+        } else if (error.message) {
+          description = error.message;
+        }
+
         toast({
             variant: "destructive",
             title: "فشل بدء المحادثة",
-            description: error.message || "حدث خطأ ما، يرجى المحاولة مرة أخرى.",
+            description: description,
         });
     } finally {
         setIsContacting(false);

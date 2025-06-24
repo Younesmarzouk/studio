@@ -132,7 +132,7 @@ export default function EditAccountPage() {
               if (storageError.code === 'storage/unauthorized') {
                 throw new Error("فشل رفع الصورة بسبب خطأ في الصلاحيات. يرجى مراجعة قواعد الأمان في Firebase Storage.");
               }
-              throw storageError;
+              throw new Error("فشل رفع الصورة: " + storageError.message);
             }
         }
         
@@ -155,9 +155,11 @@ export default function EditAccountPage() {
         router.push('/account');
     } catch (error: any) {
         console.error("Detailed error updating profile:", error);
-        let description = error.message || "فشل تحديث الملف الشخصي. الرجاء المحاولة مرة أخرى.";
+        let description = "فشل تحديث الملف الشخصي. الرجاء المحاولة مرة أخرى.";
         if (error.code === 'permission-denied') {
             description = "فشل حفظ البيانات بسبب قواعد الأمان في Firestore. يرجى مراجعتها.";
+        } else if (error.message) {
+            description = error.message;
         }
         toast({
             variant: 'destructive',

@@ -127,6 +127,11 @@ export default function UserPage() {
           toast({ variant: "destructive", title: "خطأ", description: "معلومات المستخدم غير متوفرة." });
           return;
         }
+
+        if (loggedInUser.uid === profileUser.uid) {
+            toast({ title: "هذا ملفك الشخصي", description: "لا يمكنك التواصل مع نفسك." });
+            return;
+        }
         
         setIsContacting(true);
         
@@ -141,7 +146,7 @@ export default function UserPage() {
               const currentUserDocRef = doc(db, 'users', loggedInUser.uid);
               const currentUserSnap = await getDoc(currentUserDocRef);
               if (!currentUserSnap.exists()) {
-                throw new Error("لم يتم العثور على ملفك الشخصي.");
+                throw new Error("لم يتم العثور على ملفك الشخصي. لا يمكن بدء المحادثة.");
               }
               const currentUserData = currentUserSnap.data();
 
@@ -149,8 +154,8 @@ export default function UserPage() {
                   members: [loggedInUser.uid, partnerId],
                   participants: {
                       [loggedInUser.uid]: {
-                          name: currentUserData.name,
-                          avatar: currentUserData.avatar,
+                          name: currentUserData.name || "مستخدم غير معروف",
+                          avatar: currentUserData.avatar || "",
                       },
                       [partnerId]: {
                           name: profileUser.name,
@@ -159,6 +164,7 @@ export default function UserPage() {
                   },
                   createdAt: serverTimestamp(),
                   lastMessageTimestamp: serverTimestamp(),
+                  lastMessage: "",
               });
           }
 
@@ -166,10 +172,16 @@ export default function UserPage() {
     
         } catch (error: any) {
             console.error("Error creating or getting chat:", error);
+            let description = "حدث خطأ ما، يرجى المحاولة مرة أخرى.";
+            if (error.code === 'permission-denied' || error.message.includes('permission-denied')) {
+              description = "فشل بدء المحادثة بسبب عدم وجود صلاحيات كافية. يرجى مراجعة قواعد الأمان في Firestore.";
+            } else if (error.message) {
+              description = error.message;
+            }
             toast({
                 variant: "destructive",
                 title: "فشل بدء المحادثة",
-                description: error.message || "حدث خطأ ما، يرجى المحاولة مرة أخرى.",
+                description: description,
             });
         } finally {
             setIsContacting(false);
