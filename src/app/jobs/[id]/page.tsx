@@ -9,7 +9,7 @@ import Link from 'next/link';
 import * as React from 'react';
 import Image from 'next/image';
 import { db, auth } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import type { Job } from '@/lib/data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -63,7 +63,6 @@ export default function JobDetailPage() {
 
       if (docSnap.exists()) {
         const data = docSnap.data();
-        // Fetch advertiser info to ensure it's available
         const userRef = doc(db, 'users', data.userId);
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
@@ -75,10 +74,10 @@ export default function JobDetailPage() {
                 userAvatar: userData.avatar,
             } as Ad);
         } else {
-             setJob({ id: docSnap.id, ...data } as Ad); // Set job even if user is not found
+             setJob({ id: docSnap.id, ...data } as Ad);
         }
       } else {
-        setJob(null); // Explicitly set to null if not found
+        setJob(null);
       }
       setLoading(false);
     };
@@ -104,11 +103,41 @@ export default function JobDetailPage() {
     setIsContacting(true);
     
     try {
-      // Just navigate. The chat page will handle creating the chat document.
-      router.push(`/messages/chat?partnerId=${job.userId}&partnerName=${encodeURIComponent(job.userName)}&partnerAvatar=${encodeURIComponent(job.userAvatar || '')}`);
+      const partnerId = job.userId;
+      const chatId = [user.uid, partnerId].sort().join('_');
+      const chatDocRef = doc(db, 'chats', chatId);
+
+      const chatSnap = await getDoc(chatDocRef);
+      
+      if (!chatSnap.exists()) {
+          const currentUserDocRef = doc(db, 'users', user.uid);
+          const currentUserSnap = await getDoc(currentUserDocRef);
+          if (!currentUserSnap.exists()) {
+            throw new Error("لم يتم العثور على ملفك الشخصي.");
+          }
+          const currentUserData = currentUserSnap.data();
+
+          await setDoc(chatDocRef, {
+              members: [user.uid, partnerId],
+              participants: {
+                  [user.uid]: {
+                      name: currentUserData.name,
+                      avatar: currentUserData.avatar,
+                  },
+                  [partnerId]: {
+                      name: job.userName,
+                      avatar: job.userAvatar || '',
+                  }
+              },
+              createdAt: serverTimestamp(),
+              lastMessageTimestamp: serverTimestamp(),
+          });
+      }
+
+      router.push(`/messages/chat?partnerId=${partnerId}&partnerName=${encodeURIComponent(job.userName)}&partnerAvatar=${encodeURIComponent(job.userAvatar || '')}`);
 
     } catch (error: any) {
-        console.error("Error navigating to chat:", error);
+        console.error("Error creating or navigating to chat:", error);
         toast({
             variant: "destructive",
             title: "فشل بدء المحادثة",

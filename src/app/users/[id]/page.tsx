@@ -13,7 +13,7 @@ import PageHeader from '@/components/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { UserProfile } from '@/lib/types';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, setDoc, serverTimestamp } from 'firebase/firestore';
 import type { Job } from '@/lib/data';
 import JobCard from '@/components/job-card';
 import { useParams, notFound, useRouter } from 'next/navigation';
@@ -72,7 +72,6 @@ export default function UserPage() {
 
             setLoading(true);
             try {
-                // Fetch profile user's data
                 const userDocRef = doc(db, 'users', userId);
                 const userDocSnap = await getDoc(userDocRef);
 
@@ -83,7 +82,6 @@ export default function UserPage() {
                     setProfileUser(null);
                 }
 
-                // Fetch profile user's ads without ordering to prevent index issues
                 const adsCollection = collection(db, 'ads');
                 const adsQuery = query(adsCollection, where('userId', '==', userId));
                 const adsSnapshot = await getDocs(adsQuery);
@@ -98,11 +96,10 @@ export default function UserPage() {
                         featured: data.featured || false,
                         icon: data.category || 'Hammer',
                         image: data.imageUrl,
-                        createdAt: data.createdAt // For client-side sorting
+                        createdAt: data.createdAt
                     } as Job & { createdAt: any };
                 });
                 
-                // Sort ads on the client-side
                 fetchedAds.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
 
                 setUserAds(fetchedAds);
@@ -134,8 +131,38 @@ export default function UserPage() {
         setIsContacting(true);
         
         try {
-          // Just navigate. The chat page will handle creating the chat document.
-          router.push(`/messages/chat?partnerId=${profileUser.uid}&partnerName=${encodeURIComponent(profileUser.name)}&partnerAvatar=${encodeURIComponent(profileUser.avatar || '')}`);
+          const partnerId = profileUser.uid;
+          const chatId = [loggedInUser.uid, partnerId].sort().join('_');
+          const chatDocRef = doc(db, 'chats', chatId);
+
+          const chatSnap = await getDoc(chatDocRef);
+          
+          if (!chatSnap.exists()) {
+              const currentUserDocRef = doc(db, 'users', loggedInUser.uid);
+              const currentUserSnap = await getDoc(currentUserDocRef);
+              if (!currentUserSnap.exists()) {
+                throw new Error("لم يتم العثور على ملفك الشخصي.");
+              }
+              const currentUserData = currentUserSnap.data();
+
+              await setDoc(chatDocRef, {
+                  members: [loggedInUser.uid, partnerId],
+                  participants: {
+                      [loggedInUser.uid]: {
+                          name: currentUserData.name,
+                          avatar: currentUserData.avatar,
+                      },
+                      [partnerId]: {
+                          name: profileUser.name,
+                          avatar: profileUser.avatar || '',
+                      }
+                  },
+                  createdAt: serverTimestamp(),
+                  lastMessageTimestamp: serverTimestamp(),
+              });
+          }
+
+          router.push(`/messages/chat?partnerId=${partnerId}&partnerName=${encodeURIComponent(profileUser.name)}&partnerAvatar=${encodeURIComponent(profileUser.avatar || '')}`);
     
         } catch (error: any) {
             console.error("Error creating or getting chat:", error);

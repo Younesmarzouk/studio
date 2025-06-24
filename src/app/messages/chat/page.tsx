@@ -11,9 +11,8 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { auth, db } from '@/lib/firebase';
 import type { User } from 'firebase/auth';
-import { addDoc, collection, doc, getDoc, onSnapshot, orderBy, query, serverTimestamp, setDoc } from 'firebase/firestore';
+import { addDoc, collection, doc, onSnapshot, orderBy, query, serverTimestamp, setDoc } from 'firebase/firestore';
 import { useSearchParams, useRouter } from 'next/navigation';
-import type { UserProfile } from '@/lib/types';
 
 interface Message {
   id: string;
@@ -34,76 +33,27 @@ const ChatPageContent = () => {
     const [messages, setMessages] = React.useState<Message[]>([]);
     const [newMessage, setNewMessage] = React.useState("");
     const [user, setUser] = React.useState<User | null>(null);
-    const [currentUserProfile, setCurrentUserProfile] = React.useState<UserProfile | null>(null);
     const [loading, setLoading] = React.useState(true);
-    const [isChatReady, setIsChatReady] = React.useState(false);
     const scrollAreaRef = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {
-        const unsubscribeAuth = auth.onAuthStateChanged(async (currentUser) => {
+        const unsubscribeAuth = auth.onAuthStateChanged((currentUser) => {
             if (!currentUser) {
                 toast({ variant: 'destructive', title: 'يرجى تسجيل الدخول للمتابعة' });
                 router.replace('/login');
             } else {
                 setUser(currentUser);
-                const userDocRef = doc(db, 'users', currentUser.uid);
-                const userDocSnap = await getDoc(userDocRef);
-                if (userDocSnap.exists()) {
-                    setCurrentUserProfile(userDocSnap.data() as UserProfile);
-                }
             }
         });
         return () => unsubscribeAuth();
     }, [router, toast]);
     
     React.useEffect(() => {
-        if (!loading && !partnerId) {
+        if (!partnerId) {
             toast({ variant: 'destructive', title: 'خطأ', description: 'لم يتم تحديد المستخدم الآخر.' });
             router.push('/messages');
         }
-    }, [partnerId, router, toast, loading]);
-    
-    // New effect to ensure the chat document exists before listening for messages
-    React.useEffect(() => {
-        const ensureChatExists = async () => {
-            if (!user || !partnerId || !currentUserProfile) return;
-
-            const chatId = [user.uid, partnerId].sort().join('_');
-            const chatDocRef = doc(db, 'chats', chatId);
-
-            try {
-                const chatSnap = await getDoc(chatDocRef);
-                if (!chatSnap.exists()) {
-                    await setDoc(chatDocRef, {
-                        members: [user.uid, partnerId],
-                        createdAt: serverTimestamp(),
-                        participants: {
-                            [user.uid]: {
-                                name: currentUserProfile.name,
-                                avatar: currentUserProfile.avatar
-                            },
-                            [partnerId]: {
-                                name: partnerName,
-                                avatar: partnerAvatar
-                            }
-                        }
-                    });
-                }
-                setIsChatReady(true);
-            } catch (error: any) {
-                console.error("Error ensuring chat exists:", error);
-                let description = "فشلت عملية تهيئة المحادثة.";
-                if (error.code === 'permission-denied') {
-                    description = "فشلت العملية بسبب قواعد الأمان. يرجى مراجعة إعدادات Firebase.";
-                }
-                toast({ variant: 'destructive', title: 'خطأ في المحادثة', description });
-            }
-        };
-
-        if (user && partnerId && currentUserProfile) {
-            ensureChatExists();
-        }
-    }, [user, partnerId, currentUserProfile, partnerName, partnerAvatar, toast]);
+    }, [partnerId, router, toast]);
 
     React.useEffect(() => {
         if (scrollAreaRef.current) {
@@ -111,9 +61,8 @@ const ChatPageContent = () => {
         }
     }, [messages]);
 
-    // Effect for listening to messages, now depends on isChatReady
     React.useEffect(() => {
-        if (!user || !partnerId || !isChatReady) return;
+        if (!user || !partnerId) return;
         setLoading(true);
 
         const chatId = [user.uid, partnerId].sort().join('_');
@@ -139,11 +88,11 @@ const ChatPageContent = () => {
         });
 
         return () => unsubscribeMessages();
-    }, [user, partnerId, isChatReady, toast]);
+    }, [user, partnerId, toast]);
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (newMessage.trim() === "" || !user || !partnerId || !currentUserProfile) {
+        if (newMessage.trim() === "" || !user || !partnerId) {
           if (!user) toast({ variant: 'destructive', title: 'يجب تسجيل الدخول لإرسال رسالة' });
           return;
         }
@@ -153,7 +102,6 @@ const ChatPageContent = () => {
         const chatDocRef = doc(db, 'chats', chatId);
 
         try {
-            // First, add the message
             await addDoc(messagesCollection, {
                 text: newMessage,
                 senderId: user.uid,
@@ -161,7 +109,6 @@ const ChatPageContent = () => {
                 time: serverTimestamp(),
             });
 
-            // Then, update the chat document with the last message info
             await setDoc(chatDocRef, {
                 lastMessage: newMessage,
                 lastMessageTimestamp: serverTimestamp(),
@@ -178,7 +125,7 @@ const ChatPageContent = () => {
         }
     }
 
-    if (!partnerId && !loading && !isChatReady) {
+    if (!partnerId) {
       return (
           <div className="flex h-full w-full items-center justify-center">
               <Loader2 className="h-10 w-10 animate-spin" />
@@ -188,7 +135,6 @@ const ChatPageContent = () => {
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      {/* Header */}
       <header className="flex items-center justify-between p-3 border-b shadow-sm sticky top-0 bg-card z-10">
         <div className="flex items-center gap-3">
             <Link href="/messages" passHref>
@@ -214,7 +160,6 @@ const ChatPageContent = () => {
         </div>
       </header>
 
-      {/* Messages Area */}
       <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
         <div className="space-y-4 pb-4">
             {loading ? (
@@ -245,7 +190,6 @@ const ChatPageContent = () => {
         </div>
       </ScrollArea>
       
-      {/* Input Form */}
       <div className="p-4 bg-background border-t sticky bottom-0">
         <form onSubmit={handleSendMessage} className="flex items-center gap-2">
             <Input 
@@ -254,9 +198,9 @@ const ChatPageContent = () => {
                 placeholder="اكتب رسالتك هنا..." 
                 className="flex-1"
                 dir="rtl"
-                disabled={!user || !currentUserProfile}
+                disabled={!user}
             />
-            <Button type="submit" size="icon" className="flex-shrink-0" disabled={!user || !currentUserProfile || newMessage.trim() === ""}>
+            <Button type="submit" size="icon" className="flex-shrink-0" disabled={!user || newMessage.trim() === ""}>
                 <Send className="h-5 w-5" />
             </Button>
         </form>

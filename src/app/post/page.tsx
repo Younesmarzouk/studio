@@ -104,7 +104,6 @@ export default function PostPage() {
 
     try {
         let imageUrl = "";
-        // Step 1: Upload image if it exists
         if (values.image && values.image instanceof File) {
             const file = values.image;
             const storageRef = ref(storage, `ads/${currentUser.uid}/${Date.now()}_${file.name}`);
@@ -113,11 +112,13 @@ export default function PostPage() {
                 imageUrl = await getDownloadURL(snapshot.ref);
             } catch (storageError: any) {
                 console.error("Firebase Storage Error: ", storageError);
-                throw new Error("فشل رفع الصورة بسبب خطأ في الصلاحيات. يرجى مراجعة قواعد الأمان في Firebase Storage.");
+                if (storageError.code === 'storage/unauthorized') {
+                   throw new Error("فشل رفع الصورة بسبب خطأ في الصلاحيات. يرجى مراجعة قواعد الأمان في Firebase Storage.");
+                }
+                throw storageError; // Re-throw other storage errors
             }
         }
 
-        // Step 2: Get user's profile data
         const userDocRef = doc(db, 'users', currentUser.uid);
         const userDocSnap = await getDoc(userDocRef);
         
@@ -126,7 +127,6 @@ export default function PostPage() {
         }
         const userData = userDocSnap.data();
 
-        // Step 3: Add ad document to Firestore
         await addDoc(collection(db, "ads"), {
             userId: currentUser.uid,
             userName: userData.name,
@@ -139,8 +139,8 @@ export default function PostPage() {
             price: values.price || "",
             imageUrl: imageUrl,
             createdAt: serverTimestamp(),
-            featured: false, // Default value
-            rating: 0, // Default value
+            featured: false,
+            rating: 0,
         });
         
         toast({

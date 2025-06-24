@@ -119,13 +119,21 @@ export default function EditAccountPage() {
     setIsSubmitting(true);
 
     try {
-        let avatarUrl = imagePreview; // Start with the current preview URL
+        let avatarUrl = imagePreview;
 
         if (values.avatar && values.avatar instanceof File) {
             const file = values.avatar;
             const storageRef = ref(storage, `avatars/${user.uid}/${Date.now()}_${file.name}`);
-            const snapshot = await uploadBytes(storageRef, file);
-            avatarUrl = await getDownloadURL(snapshot.ref);
+            try {
+              const snapshot = await uploadBytes(storageRef, file);
+              avatarUrl = await getDownloadURL(snapshot.ref);
+            } catch (storageError: any) {
+              console.error("Firebase Storage Error: ", storageError);
+              if (storageError.code === 'storage/unauthorized') {
+                throw new Error("فشل رفع الصورة بسبب خطأ في الصلاحيات. يرجى مراجعة قواعد الأمان في Firebase Storage.");
+              }
+              throw storageError;
+            }
         }
         
         const userDocRef = doc(db, 'users', user.uid);
@@ -147,11 +155,9 @@ export default function EditAccountPage() {
         router.push('/account');
     } catch (error: any) {
         console.error("Detailed error updating profile:", error);
-        let description = "فشل تحديث الملف الشخصي. الرجاء المحاولة مرة أخرى.";
-        if (error.code === 'permission-denied' || error.code === 'PERMISSION_DENIED') {
-            description = "فشل حفظ البيانات بسبب قواعد الأمان في Firestore.";
-        } else if (error.code === 'storage/unauthorized') {
-            description = "فشل رفع الصورة بسبب قواعد الأمان في Firebase Storage.";
+        let description = error.message || "فشل تحديث الملف الشخصي. الرجاء المحاولة مرة أخرى.";
+        if (error.code === 'permission-denied') {
+            description = "فشل حفظ البيانات بسبب قواعد الأمان في Firestore. يرجى مراجعتها.";
         }
         toast({
             variant: 'destructive',
