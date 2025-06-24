@@ -1,7 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { useForm, type FieldErrors } from "react-hook-form"
 import * as z from "zod"
 import * as React from "react"
 import Image from "next/image"
@@ -46,7 +46,7 @@ const formSchema = z.object({
   category: z.string().min(1, { message: "الرجاء اختيار فئة." }),
   description: z.string().min(10, "يجب أن يكون الوصف 10 أحرف على الأقل.").max(500, "يجب أن يكون الوصف 500 حرف على الأكثر."),
   city: z.string().min(2, "يجب إدخال اسم المدينة."),
-  price: z.string().optional().default(""),
+  price: z.string().optional(),
   image: z.any().optional(),
 })
 
@@ -143,14 +143,24 @@ export default function PostPage() {
         router.push('/jobs');
     } catch (error) {
         console.error("Error posting ad: ", error);
+        const errorMessage = error instanceof Error ? error.message : "حدث خطأ غير متوقع.";
         toast({
             variant: "destructive",
             title: "فشل نشر الإعلان",
-            description: "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+            description: `حدث خطأ أثناء الحفظ: ${errorMessage}`,
         });
     } finally {
         setIsSubmitting(false);
     }
+  }
+
+  const onInvalid = (errors: FieldErrors) => {
+    console.error("Form validation failed:", errors)
+    toast({
+      variant: "destructive",
+      title: "بيانات غير مكتملة",
+      description: "الرجاء التأكد من ملء جميع الحقول المطلوبة بشكل صحيح.",
+    })
   }
   
   if (loading) {
@@ -188,7 +198,7 @@ export default function PostPage() {
         <Card>
           <CardContent className="pt-6">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
                 <FormField
                   control={form.control}
                   name="type"
