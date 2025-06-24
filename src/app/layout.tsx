@@ -1,3 +1,4 @@
+
 "use client" 
 
 import './globals.css';
@@ -5,6 +6,7 @@ import * as React from 'react';
 import { Toaster } from '@/components/ui/toaster';
 import BottomNav from '@/components/bottom-nav';
 import { usePathname } from 'next/navigation';
+import { ThemeProvider } from '@/context/theme-provider';
 
 
 export default function RootLayout({
@@ -16,7 +18,7 @@ export default function RootLayout({
   const showBottomNav = !['/login', '/register'].includes(pathname);
 
   return (
-    <html lang="ar" dir="rtl">
+    <html lang="ar" dir="rtl" suppressHydrationWarning>
       <head>
         <title>Zafay</title>
         <meta name="description" content="منصة الربط بين العمال وأصحاب العمل" />
@@ -28,11 +30,13 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <div className="relative flex min-h-screen flex-col bg-background">
-          <main className={showBottomNav ? "flex-1 pb-24" : "flex-1"}>{children}</main>
-          {showBottomNav && <BottomNav />}
-        </div>
-        <Toaster />
+        <ThemeProvider>
+            <div className="relative flex min-h-screen flex-col bg-background">
+              <main className={showBottomNav ? "flex-1 pb-24" : "flex-1"}>{children}</main>
+              {showBottomNav && <BottomNav />}
+            </div>
+            <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

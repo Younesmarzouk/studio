@@ -1,3 +1,4 @@
+
 "use client"
 import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,18 +9,26 @@ import { Button } from "@/components/ui/button";
 import { User, Bell, Globe, Moon, LogOut, ChevronRight, Paintbrush } from "lucide-react";
 import Link from 'next/link';
 import PageHeader from '@/components/page-header';
+import { useTheme } from '@/context/theme-provider';
+import { auth } from '@/lib/firebase';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
 export default function SettingsPage() {
+  const { theme, setTheme } = useTheme();
   const [notifications, setNotifications] = React.useState(true);
-  const [darkMode, setDarkMode] = React.useState(false);
+  const router = useRouter();
+  const { toast } = useToast();
 
-  React.useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      toast({ title: 'تم تسجيل الخروج بنجاح.' });
+      router.push('/login');
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'خطأ', description: 'فشل تسجيل الخروج.' });
     }
-  }, [darkMode]);
+  };
 
   return (
     <div>
@@ -59,7 +68,11 @@ export default function SettingsPage() {
                   <Paintbrush className="h-5 w-5 text-muted-foreground" />
                   <Label htmlFor="dark-mode-switch">الوضع الداكن</Label>
                 </div>
-                <Switch id="dark-mode-switch" checked={darkMode} onCheckedChange={setDarkMode} />
+                <Switch 
+                  id="dark-mode-switch" 
+                  checked={theme === 'dark'} 
+                  onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')} 
+                />
               </div>
               <Separator />
               <div className="flex items-center justify-between p-3 rounded-lg hover:bg-accent cursor-pointer">
@@ -75,12 +88,10 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
 
-          <Link href="/login" className="w-full">
-            <Button variant="destructive" className="w-full">
+            <Button variant="destructive" className="w-full" onClick={handleLogout}>
               <LogOut className="ml-2 h-4 w-4" />
               تسجيل الخروج
             </Button>
-          </Link>
         </div>
       </div>
     </div>
