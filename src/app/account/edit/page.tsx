@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -24,7 +25,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
-import { User, Briefcase, MapPin, Mail, Phone, Save, ChevronLeft, Loader2 } from "lucide-react"
+import { User, Briefcase, MapPin, Mail, Phone, Save, ChevronLeft, Loader2, Award } from "lucide-react"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
@@ -44,6 +45,7 @@ const profileFormSchema = z.object({
   phone: z.string().min(10, { message: "الرجاء إدخال رقم هاتف صحيح." }),
   bio: z.string().min(10, { message: "يجب أن تكون النبذة 10 أحرف على الأقل." }).max(300, "يجب ألا تتجاوز النبذة 300 حرف."),
   skills: z.string(),
+  certifications: z.string().max(1000, "النص طويل جداً").optional(),
 })
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -89,7 +91,7 @@ export default function EditAccountPage() {
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
-      name: '', title: '', location: '', email: '', phone: '', bio: '', skills: '',
+      name: '', title: '', location: '', email: '', phone: '', bio: '', skills: '', certifications: '',
     },
   })
 
@@ -109,6 +111,7 @@ export default function EditAccountPage() {
                     phone: userData.phone || '',
                     bio: userData.bio || '',
                     skills: (userData.skills || []).join(', '),
+                    certifications: (userData.certifications || []).map((c: any) => `${c.name}, ${c.authority}, ${c.year}`).join('\n'),
                 });
                 setAvatarUrl(userData.avatar || `https://api.dicebear.com/8.x/adventurer/svg?seed=${userData.email}`);
             }
@@ -127,6 +130,12 @@ export default function EditAccountPage() {
 
     try {
         const userDocRef = doc(db, 'users', user.uid);
+        
+        const certifications = values.certifications?.split('\n').filter(Boolean).map(line => {
+            const [name = '', authority = '', year = ''] = line.split(',').map(s => s.trim());
+            return { name, authority, year };
+        }) || [];
+
         await updateDoc(userDocRef, {
             name: values.name,
             title: values.title,
@@ -135,6 +144,7 @@ export default function EditAccountPage() {
             phone: values.phone,
             bio: values.bio,
             skills: values.skills.split(',').map(s => s.trim()).filter(Boolean),
+            certifications: certifications,
         });
 
         toast({
@@ -278,6 +288,27 @@ export default function EditAccountPage() {
                 )}
               />
 
+              <FormField
+                control={form.control}
+                name="certifications"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2"><Award className="h-4 w-4" /> الشهادات والمؤهلات</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="اكتب كل شهادة في سطر منفصل، مع الفصل بفاصلة بين الاسم والجهة والسنة."
+                        className="resize-y"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      مثال: شهادة تحليل بيانات, جوجل, 2023
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <Card>
                 <CardHeader>
                     <CardTitle className="text-lg">معلومات التواصل</CardTitle>
@@ -337,5 +368,3 @@ export default function EditAccountPage() {
     </div>
   )
 }
-
-    

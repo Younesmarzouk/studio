@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Search, SlidersHorizontal } from 'lucide-react';
 import type { Job } from '@/lib/data';
 import PageHeader from '@/components/page-header';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -15,14 +15,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function JobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
       const fetchJobs = async () => {
           setLoading(true);
           try {
               const adsCollection = collection(db, 'ads');
-              // We query all ads and sort by date, then filter for 'job' on the client.
-              // This avoids needing a composite index on 'type' and 'createdAt'.
               const q = query(adsCollection, orderBy('createdAt', 'desc'));
               const querySnapshot = await getDocs(q);
               const allAds = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -51,6 +50,16 @@ export default function JobsPage() {
 
       fetchJobs();
   }, []);
+
+  const filteredJobs = useMemo(() => {
+    if (!searchTerm) {
+      return jobs;
+    }
+    return jobs.filter(job =>
+      job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      job.city.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [searchTerm, jobs]);
 
   if (loading) {
     return (
@@ -81,6 +90,8 @@ export default function JobsPage() {
               placeholder="ابحث عن وظيفة أو خدمة..."
               className="w-full pl-10 pr-4 py-2 rounded-xl border-2 border-border bg-card"
               dir="rtl"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
               <Search className="h-5 w-5" />
@@ -92,11 +103,17 @@ export default function JobsPage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {jobs.map(job => (
-            <div key={job.id} className="w-full">
-              <JobCard job={job} />
+          {filteredJobs.length > 0 ? (
+            filteredJobs.map(job => (
+              <div key={job.id} className="w-full">
+                <JobCard job={job} />
+              </div>
+            ))
+          ) : (
+            <div className="col-span-full text-center py-10">
+              <p className="text-muted-foreground">لا توجد نتائج مطابقة لبحثك.</p>
             </div>
-          ))}
+          )}
         </div>
       </div>
     </div>

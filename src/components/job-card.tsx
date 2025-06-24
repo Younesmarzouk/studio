@@ -81,7 +81,7 @@ export default function JobCard({ job, isEditable = false, onDeleteClick }: JobC
           </div>
         </div>
       </Link>
-      {isEditable && (
+      {isEditable && onDeleteClick && (
         <>
           <Separator />
           <div className="p-2 flex gap-2">

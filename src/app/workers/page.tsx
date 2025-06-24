@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Search, SlidersHorizontal } from 'lucide-react';
 import type { Worker } from '@/lib/data';
 import PageHeader from '@/components/page-header';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { collection, getDocs, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,6 +16,7 @@ import { getProfessionByValue } from '@/lib/professions';
 export default function WorkersPage() {
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
       const fetchWorkers = async () => {
@@ -47,6 +48,17 @@ export default function WorkersPage() {
       fetchWorkers();
   }, []);
 
+  const filteredWorkers = useMemo(() => {
+    if (!searchTerm) {
+      return workers;
+    }
+    return workers.filter(worker =>
+      worker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      worker.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      worker.city.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [searchTerm, workers]);
+
   if (loading) {
     return (
         <div>
@@ -76,6 +88,8 @@ export default function WorkersPage() {
               placeholder="ابحث عن عامل أو حرفي..."
               className="w-full pl-10 pr-4 py-2 rounded-xl border-2 border-border bg-card"
               dir="rtl"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
               <Search className="h-5 w-5" />
@@ -87,15 +101,19 @@ export default function WorkersPage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {workers.map(worker => (
-            <div key={worker.id} className="w-full">
-              <WorkerCard worker={worker} />
+          {filteredWorkers.length > 0 ? (
+            filteredWorkers.map(worker => (
+              <div key={worker.id} className="w-full">
+                <WorkerCard worker={worker} />
+              </div>
+            ))
+          ) : (
+            <div className="col-span-full text-center py-10">
+              <p className="text-muted-foreground">لا توجد نتائج مطابقة لبحثك.</p>
             </div>
-          ))}
+          )}
         </div>
       </div>
     </div>
   );
 }
-
-    
