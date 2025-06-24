@@ -166,7 +166,7 @@ export default function AccountPage() {
                             <CardContent>
                                 <p className="text-muted-foreground leading-relaxed">{user.bio || "لا توجد نبذة شخصية."}</p>
                                 <div className="mt-4 flex flex-wrap gap-2">
-                                    {user.skills?.map(skill => <Badge key={skill} variant="secondary">{skill}</Badge>)}
+                                    {user.skills?.map((skill, index) => <Badge key={`${skill}-${index}`} variant="secondary">{skill}</Badge>)}
                                 </div>
                             </CardContent>
                         </Card>
@@ -177,7 +177,7 @@ export default function AccountPage() {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 {user.experience?.length > 0 ? user.experience.map((exp, i) => (
-                                    <React.Fragment key={i}>
+                                    <React.Fragment key={`${exp.title}-${i}`}>
                                         <div className="flex gap-4">
                                             <div className="flex-shrink-0 w-12 h-12 bg-muted rounded-full flex items-center justify-center">
                                                 <Building className="h-6 w-6 text-muted-foreground" />
@@ -218,7 +218,7 @@ export default function AccountPage() {
                             <CardContent>
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                 {user.portfolio?.length > 0 ? user.portfolio.map((item, i) => (
-                                    <Image key={i} src={item.src} alt={`Portfolio item ${i+1}`} width={200} height={150} className="rounded-lg object-cover aspect-[4/3] hover:opacity-80 transition-opacity" data-ai-hint={item.hint} />
+                                    <Image key={`${item.src}-${i}`} src={item.src} alt={`Portfolio item ${i+1}`} width={200} height={150} className="rounded-lg object-cover aspect-[4/3] hover:opacity-80 transition-opacity" data-ai-hint={item.hint} />
                                 )) : <p className="text-muted-foreground col-span-full">لا يوجد معرض أعمال.</p>}
                                 </div>
                             </CardContent>
@@ -247,7 +247,7 @@ export default function AccountPage() {
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 {user.certifications?.length > 0 ? user.certifications.map((cert, i) => (
-                                <div key={i}>
+                                <div key={`${cert.name}-${i}`}>
                                         <p className="font-semibold">{cert.name}</p>
                                         <p className="text-sm text-muted-foreground">{cert.authority} - {cert.year}</p>
                                 </div>

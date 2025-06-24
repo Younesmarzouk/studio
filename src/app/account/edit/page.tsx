@@ -273,7 +273,7 @@ export default function EditAccountPage() {
                       <Input placeholder="فصل بين المهارات بفاصلة, مثل: نجارة, تصميم" {...field} />
                     </FormControl>
                      <div className="flex flex-wrap gap-2 pt-2">
-                        {form.watch('skills').split(',').map(skill => skill.trim() && <Badge key={skill} variant="secondary">{skill.trim()}</Badge>)}
+                        {form.watch('skills').split(',').map((skill, index) => skill.trim() && <Badge key={`${skill.trim()}-${index}`} variant="secondary">{skill.trim()}</Badge>)}
                      </div>
                     <FormMessage />
                   </FormItem>
