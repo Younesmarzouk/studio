@@ -64,8 +64,11 @@ export default function PostPage() {
     defaultValues: {
       type: "job",
       title: "",
+      category: "",
       description: "",
       city: "",
+      price: "",
+      image: undefined,
     },
   })
   
@@ -279,7 +282,7 @@ export default function PostPage() {
                 <FormField
                   control={form.control}
                   name="image"
-                  render={({ field: { onChange, ...rest } }) => (
+                  render={({ field: { onChange, onBlur, name, ref } }) => (
                     <FormItem>
                       <FormLabel>إضافة صورة (اختياري)</FormLabel>
                       <FormControl>
@@ -295,7 +298,9 @@ export default function PostPage() {
                                 </div>
                               )}
                               <Input id="dropzone-file" type="file" className="hidden" 
-                                {...rest}
+                                ref={ref}
+                                name={name}
+                                onBlur={onBlur}
                                 onChange={(e) => {
                                   const file = e.target.files?.[0];
                                   if (file) {
