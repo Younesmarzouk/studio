@@ -7,7 +7,7 @@ import { Search, SlidersHorizontal } from 'lucide-react';
 import type { Job } from '@/lib/data';
 import PageHeader from '@/components/page-header';
 import { useEffect, useState } from 'react';
-import { collection, getDocs, orderBy, query, where } from 'firebase/firestore';
+import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -20,21 +20,26 @@ export default function JobsPage() {
           setLoading(true);
           try {
               const adsCollection = collection(db, 'ads');
-              const q = query(adsCollection, where("type", "==", "job"), orderBy('createdAt', 'desc'));
+              // We query all ads and sort by date, then filter for 'job' on the client.
+              // This avoids needing a composite index on 'type' and 'createdAt'.
+              const q = query(adsCollection, orderBy('createdAt', 'desc'));
               const querySnapshot = await getDocs(q);
-              const fetchedJobs = querySnapshot.docs.map(doc => {
-                  const data = doc.data();
-                  return {
-                      id: doc.id,
-                      title: data.title,
-                      city: data.city,
-                      price: data.price,
-                      rating: data.rating || 4.5,
-                      featured: data.featured || false,
-                      icon: data.category || 'Hammer', // Use category as icon key, fallback to Hammer
-                      image: data.imageUrl,
-                  } as Job;
-              });
+              const allAds = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+              
+              const fetchedJobs = allAds
+                .filter((ad: any) => ad.type === 'job')
+                .map((data: any) => {
+                    return {
+                        id: data.id,
+                        title: data.title,
+                        city: data.city,
+                        price: data.price,
+                        rating: data.rating || 4.5,
+                        featured: data.featured || false,
+                        icon: data.category || 'Hammer',
+                        image: data.imageUrl,
+                    } as Job;
+                });
               setJobs(fetchedJobs);
           } catch (error) {
               console.error("Error fetching jobs: ", error);

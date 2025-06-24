@@ -24,7 +24,7 @@ import Link from 'next/link';
 import HomeHeader from '@/components/home-header';
 import JobCard from '@/components/job-card';
 import WorkerCard from '@/components/worker-card';
-import { collection, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
+import { collection, getDocs, limit, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -41,22 +41,27 @@ export default function Home() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            // Fetch jobs (ads of type 'job')
-            const jobsQuery = query(collection(db, "ads"), where("type", "==", "job"), orderBy("createdAt", "desc"), limit(4));
-            const jobsSnapshot = await getDocs(jobsQuery);
-            const fetchedJobs = jobsSnapshot.docs.map(doc => {
-              const data = doc.data();
-              return {
-                  id: doc.id,
-                  title: data.title,
-                  city: data.city,
-                  price: data.price,
-                  rating: data.rating || 4.5,
-                  featured: data.featured || false,
-                  icon: data.category || 'Hammer',
-                  image: data.imageUrl,
-              } as Job;
-            });
+            // Fetch jobs (latest ads of type 'job')
+            // We query all recent ads and filter for jobs on the client to avoid needing a composite index.
+            const adsQuery = query(collection(db, "ads"), orderBy("createdAt", "desc"), limit(8)); // Fetch a bit more to increase chance of finding 4 jobs
+            const adsSnapshot = await getDocs(adsQuery);
+            const allRecentAds = adsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            const fetchedJobs = allRecentAds
+                .filter((ad: any) => ad.type === 'job')
+                .slice(0, 4) // Take the first 4 jobs
+                .map((data: any) => {
+                    return {
+                        id: data.id,
+                        title: data.title,
+                        city: data.city,
+                        price: data.price,
+                        rating: data.rating || 4.5,
+                        featured: data.featured || false,
+                        icon: data.category || 'Hammer',
+                        image: data.imageUrl,
+                    } as Job;
+                });
             setJobs(fetchedJobs);
             
             // Fetch workers (ads of type 'worker', but display user profiles)

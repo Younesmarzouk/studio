@@ -69,7 +69,8 @@ export default function AccountPage() {
 
                     // Fetch user's ads
                     const adsCollection = collection(db, 'ads');
-                    const adsQuery = query(adsCollection, where('userId', '==', firebaseUser.uid), orderBy('createdAt', 'desc'));
+                    // Query by userId only to avoid composite index. We'll sort on the client.
+                    const adsQuery = query(adsCollection, where('userId', '==', firebaseUser.uid));
                     const adsSnapshot = await getDocs(adsQuery);
                     const fetchedAds = adsSnapshot.docs.map(doc => {
                         const data = doc.data();
@@ -82,8 +83,13 @@ export default function AccountPage() {
                             featured: data.featured || false,
                             icon: data.category || 'Hammer',
                             image: data.imageUrl,
-                        } as Job;
+                            createdAt: data.createdAt, // For sorting
+                        } as Job & { createdAt: any };
                     });
+
+                    // Sort ads by creation date on the client-side
+                    fetchedAds.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+
                     setMyAds(fetchedAds);
 
                 } catch (error) {
