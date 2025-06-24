@@ -23,8 +23,7 @@ import Image from "next/image"
 import * as React from "react"
 import { useRouter } from "next/navigation"
 import { doc, getDoc, updateDoc } from "firebase/firestore"
-import { auth, db, storage } from "@/lib/firebase"
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
+import { auth, db } from "@/lib/firebase"
 import type { User as FirebaseUser } from 'firebase/auth';
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -36,7 +35,6 @@ const profileFormSchema = z.object({
   phone: z.string().min(10, { message: "الرجاء إدخال رقم هاتف صحيح." }),
   bio: z.string().min(10, { message: "يجب أن تكون النبذة 10 أحرف على الأقل." }).max(300, "يجب ألا تتجاوز النبذة 300 حرف."),
   skills: z.string(),
-  avatar: z.any().optional(),
 })
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -77,7 +75,7 @@ export default function EditAccountPage() {
   const [user, setUser] = React.useState<FirebaseUser | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [imagePreview, setImagePreview] = React.useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -103,7 +101,7 @@ export default function EditAccountPage() {
                     bio: userData.bio || '',
                     skills: (userData.skills || []).join(', '),
                 });
-                setImagePreview(userData.avatar || null);
+                setAvatarUrl(userData.avatar || null);
             }
         } else {
             router.replace('/login');
@@ -119,23 +117,6 @@ export default function EditAccountPage() {
     setIsSubmitting(true);
 
     try {
-        let avatarUrl = imagePreview;
-
-        if (values.avatar && values.avatar instanceof File) {
-            const file = values.avatar;
-            const storageRef = ref(storage, `avatars/${user.uid}/${Date.now()}_${file.name}`);
-            try {
-              const snapshot = await uploadBytes(storageRef, file);
-              avatarUrl = await getDownloadURL(snapshot.ref);
-            } catch (storageError: any) {
-              console.error("Firebase Storage Error: ", storageError);
-              if (storageError.code === 'storage/unauthorized') {
-                throw new Error("فشل رفع الصورة بسبب خطأ في الصلاحيات. يرجى مراجعة قواعد الأمان في Firebase Storage.");
-              }
-              throw new Error("فشل رفع الصورة: " + storageError.message);
-            }
-        }
-        
         const userDocRef = doc(db, 'users', user.uid);
         await updateDoc(userDocRef, {
             name: values.name,
@@ -145,7 +126,6 @@ export default function EditAccountPage() {
             phone: values.phone,
             bio: values.bio,
             skills: values.skills.split(',').map(s => s.trim()).filter(Boolean),
-            avatar: avatarUrl,
         });
 
         toast({
@@ -190,35 +170,22 @@ export default function EditAccountPage() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               
-              <FormField
-                control={form.control}
-                name="avatar"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>الصورة الشخصية</FormLabel>
-                    <FormControl>
-                       <div className="flex items-center gap-4">
-                         <Image 
-                           src={imagePreview || 'https://placehold.co/96x96.png'} 
-                           alt="Avatar Preview" 
-                           width={96} 
-                           height={96} 
-                           className="w-24 h-24 rounded-full object-cover" 
-                           data-ai-hint="person face" />
-                         <Input id="avatar-upload" type="file" className="max-w-xs" onChange={(e) => {
-                             const file = e.target.files?.[0];
-                             if (file) {
-                                 field.onChange(file);
-                                 setImagePreview(URL.createObjectURL(file));
-                             }
-                         }} />
-                       </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
+              <FormItem>
+                <FormLabel>الصورة الشخصية</FormLabel>
+                <FormControl>
+                    <div className="flex items-center gap-4">
+                    {avatarUrl && <Image 
+                        src={avatarUrl} 
+                        alt="Avatar" 
+                        width={96} 
+                        height={96} 
+                        className="w-24 h-24 rounded-full object-cover" 
+                        data-ai-hint="person face" />}
+                    <p className="text-sm text-muted-foreground">يتم تعيين الصور الرمزية تلقائيًا ولا يمكن تغييرها.</p>
+                    </div>
+                </FormControl>
+              </FormItem>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}

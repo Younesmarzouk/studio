@@ -52,7 +52,7 @@ export default function RegisterPage() {
         title: "باحث عن عمل",
         location: "غير محدد",
         bio: "",
-        avatar: `https://placehold.co/128x128.png`,
+        avatar: `https://api.dicebear.com/8.x/adventurer/svg?seed=${user.email}`,
         skills: [],
         experience: [],
         certifications: [],

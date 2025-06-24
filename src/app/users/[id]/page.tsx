@@ -7,18 +7,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { User, Phone, Mail, Award, Briefcase, Building, MapPin, Pencil, GalleryHorizontal, List, MessageSquare, Loader2 } from 'lucide-react';
+import { User, Phone, Mail, Award, Briefcase, Building, MapPin, Pencil, GalleryHorizontal, List } from 'lucide-react';
 import Link from 'next/link';
 import PageHeader from '@/components/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { UserProfile } from '@/lib/types';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, collection, query, where, getDocs, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import type { Job } from '@/lib/data';
 import JobCard from '@/components/job-card';
-import { useParams, notFound, useRouter } from 'next/navigation';
+import { useParams, notFound } from 'next/navigation';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { useToast } from "@/hooks/use-toast"
 
 const UserPageSkeleton = () => (
     <div>
@@ -53,15 +52,12 @@ const UserPageSkeleton = () => (
 export default function UserPage() {
     const params = useParams();
     const userId = params.id as string;
-    const router = useRouter();
-    const { toast } = useToast();
     
     const [loggedInUser, authLoading] = useAuthState(auth);
     
     const [profileUser, setProfileUser] = React.useState<UserProfile | null>(null);
     const [userAds, setUserAds] = React.useState<Job[]>([]);
     const [loading, setLoading] = React.useState(true);
-    const [isContacting, setIsContacting] = React.useState(false);
 
     React.useEffect(() => {
         const fetchUserData = async () => {
@@ -114,80 +110,6 @@ export default function UserPage() {
         fetchUserData();
     }, [userId]);
 
-    const handleContact = async () => {
-        if (!loggedInUser) {
-          toast({
-            variant: "destructive",
-            title: "يرجى تسجيل الدخول",
-            description: "يجب تسجيل الدخول أولاً للتواصل مع هذا المستخدم.",
-          });
-          return router.push('/login');
-        }
-        if (!profileUser) {
-          toast({ variant: "destructive", title: "خطأ", description: "معلومات المستخدم غير متوفرة." });
-          return;
-        }
-
-        if (loggedInUser.uid === profileUser.uid) {
-            toast({ title: "هذا ملفك الشخصي", description: "لا يمكنك التواصل مع نفسك." });
-            return;
-        }
-        
-        setIsContacting(true);
-        
-        try {
-          const partnerId = profileUser.uid;
-          const chatId = [loggedInUser.uid, partnerId].sort().join('_');
-          const chatDocRef = doc(db, 'chats', chatId);
-
-          const chatSnap = await getDoc(chatDocRef);
-          
-          if (!chatSnap.exists()) {
-              const currentUserDocRef = doc(db, 'users', loggedInUser.uid);
-              const currentUserSnap = await getDoc(currentUserDocRef);
-              if (!currentUserSnap.exists()) {
-                throw new Error("لم يتم العثور على ملفك الشخصي. لا يمكن بدء المحادثة.");
-              }
-              const currentUserData = currentUserSnap.data();
-
-              await setDoc(chatDocRef, {
-                  members: [loggedInUser.uid, partnerId],
-                  participants: {
-                      [loggedInUser.uid]: {
-                          name: currentUserData.name || "مستخدم غير معروف",
-                          avatar: currentUserData.avatar || "",
-                      },
-                      [partnerId]: {
-                          name: profileUser.name,
-                          avatar: profileUser.avatar || '',
-                      }
-                  },
-                  createdAt: serverTimestamp(),
-                  lastMessageTimestamp: serverTimestamp(),
-                  lastMessage: "",
-              });
-          }
-
-          router.push(`/messages/chat?partnerId=${partnerId}&partnerName=${encodeURIComponent(profileUser.name)}&partnerAvatar=${encodeURIComponent(profileUser.avatar || '')}`);
-    
-        } catch (error: any) {
-            console.error("Error creating or getting chat:", error);
-            let description = "حدث خطأ ما، يرجى المحاولة مرة أخرى.";
-            if (error.code === 'permission-denied' || error.message.includes('permission-denied')) {
-              description = "فشل بدء المحادثة بسبب عدم وجود صلاحيات كافية. يرجى مراجعة قواعد الأمان في Firestore.";
-            } else if (error.message) {
-              description = error.message;
-            }
-            toast({
-                variant: "destructive",
-                title: "فشل بدء المحادثة",
-                description: description,
-            });
-        } finally {
-            setIsContacting(false);
-        }
-    }
-
     if (loading || authLoading) {
         return <UserPageSkeleton />;
     }
@@ -231,10 +153,16 @@ export default function UserPage() {
                                     </Button>
                                 </Link>
                             ) : (
-                                <Button onClick={handleContact} disabled={isContacting || authLoading}>
-                                    {isContacting ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <MessageSquare className="ml-2 h-4 w-4" />}
-                                    {isContacting ? 'جاري التحضير...' : (loggedInUser ? 'تواصل معي' : 'سجل الدخول للتواصل')}
-                                </Button>
+                                profileUser.phone ? (
+                                    <Button asChild>
+                                        <a href={`tel:${profileUser.phone}`}>
+                                            <Phone className="ml-2 h-4 w-4" />
+                                            اتصال
+                                        </a>
+                                    </Button>
+                                ) : (
+                                    <Button variant="outline" disabled>لا يوجد رقم هاتف</Button>
+                                )
                             )}
                         </div>
                     </CardContent>

@@ -3,7 +3,7 @@ import Image from 'next/image';
 import * as React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Hammer, MapPin, Star, Zap, Wrench, Code, PaintRoller, Users, TrendingUp, Sprout } from "lucide-react";
+import { Hammer, MapPin, Star, Zap, Wrench, Code, PaintRoller, Users, Sprout, Baby, Trash2 } from "lucide-react";
 import type { Job } from '@/lib/data';
 
 type JobCardProps = {
@@ -17,8 +17,18 @@ const iconMap: { [key: string]: React.ElementType } = {
   Code,
   PaintRoller,
   Users,
-  TrendingUp,
   Sprout,
+  Baby,
+  Trash2,
+  construction: Hammer,
+  cleaning: Trash2,
+  childcare: Baby,
+  carpentry: Hammer,
+  electricity: Zap,
+  plumbing: Wrench,
+  design: PaintRoller,
+  development: Code,
+  other: Hammer,
   Default: Hammer,
 };
 

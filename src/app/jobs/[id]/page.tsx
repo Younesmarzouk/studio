@@ -1,20 +1,18 @@
 "use client"
 
-import { notFound, useParams, useRouter } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Star, Hammer, Calendar, Wallet, FileText, ChevronLeft, Zap, Wrench, Code, PaintRoller, Users, TrendingUp, Sprout, MessageSquare, Loader2 } from 'lucide-react';
+import { MapPin, Star, Hammer, Calendar, Wallet, FileText, ChevronLeft, Zap, Wrench, Code, PaintRoller, Users, Sprout, Phone, Trash2, Baby } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import * as React from 'react';
 import Image from 'next/image';
-import { db, auth } from '@/lib/firebase';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import type { Job } from '@/lib/data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { useToast } from "@/hooks/use-toast"
 
 type Ad = Job & {
     description?: string;
@@ -22,6 +20,7 @@ type Ad = Job & {
     userId?: string;
     userName?: string;
     userAvatar?: string;
+    userPhone?: string;
 };
 
 const iconMap: { [key: string]: React.ElementType } = {
@@ -31,8 +30,12 @@ const iconMap: { [key: string]: React.ElementType } = {
   Code,
   PaintRoller,
   Users,
-  TrendingUp,
   Sprout,
+  Trash2,
+  Baby,
+  construction: Hammer,
+  cleaning: Trash2,
+  childcare: Baby,
   carpentry: Hammer,
   electricity: Zap,
   plumbing: Wrench,
@@ -45,14 +48,10 @@ const iconMap: { [key: string]: React.ElementType } = {
 export default function JobDetailPage() {
   const params = useParams();
   const id = params.id as string;
-  const router = useRouter();
-  const { toast } = useToast();
 
   const [job, setJob] = React.useState<Ad | null>(null);
   const [loading, setLoading] = React.useState(true);
-  const [isContacting, setIsContacting] = React.useState(false);
-  const [user, authLoading] = useAuthState(auth);
-
+  
   React.useEffect(() => {
     if (!id) return;
 
@@ -73,6 +72,7 @@ export default function JobDetailPage() {
                   ...data,
                   userName: userData.name,
                   userAvatar: userData.avatar,
+                  userPhone: userData.phone,
               } as Ad);
           } else {
                setJob({ id: docSnap.id, ...data } as Ad);
@@ -89,84 +89,7 @@ export default function JobDetailPage() {
     fetchJob();
   }, [id]);
 
-  const handleContact = async () => {
-    if (!user) {
-      toast({
-        variant: "destructive",
-        title: "يرجى تسجيل الدخول",
-        description: "يجب تسجيل الدخول أولاً للتواصل مع صاحب الإعلان.",
-      });
-      return router.push('/login');
-    }
-    
-    if (!job || !job.userId || !job.userName) {
-      toast({ variant: "destructive", title: "خطأ", description: "معلومات صاحب الإعلان غير متوفرة أو غير مكتملة." });
-      return;
-    }
-    
-    if (user.uid === job.userId) {
-      toast({ title: "هذا إعلانك", description: "لا يمكنك التواصل مع نفسك." });
-      return;
-    }
-
-    setIsContacting(true);
-    
-    try {
-      const partnerId = job.userId;
-      const chatId = [user.uid, partnerId].sort().join('_');
-      const chatDocRef = doc(db, 'chats', chatId);
-
-      const chatSnap = await getDoc(chatDocRef);
-      
-      if (!chatSnap.exists()) {
-          const currentUserDocRef = doc(db, 'users', user.uid);
-          const currentUserSnap = await getDoc(currentUserDocRef);
-          if (!currentUserSnap.exists()) {
-            throw new Error("لم يتم العثور على ملفك الشخصي. لا يمكن بدء المحادثة.");
-          }
-          const currentUserData = currentUserSnap.data();
-
-          await setDoc(chatDocRef, {
-              members: [user.uid, partnerId],
-              participants: {
-                  [user.uid]: {
-                      name: currentUserData.name || "مستخدم غير معروف",
-                      avatar: currentUserData.avatar || "",
-                  },
-                  [partnerId]: {
-                      name: job.userName,
-                      avatar: job.userAvatar || '',
-                  }
-              },
-              createdAt: serverTimestamp(),
-              lastMessageTimestamp: serverTimestamp(),
-              lastMessage: "",
-          });
-      }
-
-      router.push(`/messages/chat?partnerId=${partnerId}&partnerName=${encodeURIComponent(job.userName)}&partnerAvatar=${encodeURIComponent(job.userAvatar || '')}`);
-
-    } catch (error: any) {
-        console.error("Error creating or navigating to chat:", error);
-        let description = "حدث خطأ ما، يرجى المحاولة مرة أخرى.";
-        if (error.code === 'permission-denied' || error.message.includes('permission-denied')) {
-          description = "فشل بدء المحادثة بسبب عدم وجود صلاحيات كافية. يرجى مراجعة قواعد الأمان في Firestore.";
-        } else if (error.message) {
-          description = error.message;
-        }
-
-        toast({
-            variant: "destructive",
-            title: "فشل بدء المحادثة",
-            description: description,
-        });
-    } finally {
-        setIsContacting(false);
-    }
-  }
-
-
-  if (loading || authLoading) {
+  if (loading) {
     return (
       <div className="p-4 md:p-6 max-w-3xl mx-auto">
         <Skeleton className="h-8 w-48 mb-4" />
@@ -205,7 +128,6 @@ export default function JobDetailPage() {
   }
 
   const IconComponent = iconMap[job.icon || 'Default'] || Hammer;
-  const isOwnAd = user && user.uid === job.userId;
 
   return (
     <div className="p-4 md:p-6 max-w-3xl mx-auto">
@@ -287,18 +209,31 @@ export default function JobDetailPage() {
                     </Card>
                 )}
             </div>
-
-            <div className="mt-8 pt-6 border-t text-center">
-                 {isOwnAd ? (
-                     <p className="text-sm text-muted-foreground">هذا هو إعلانك.</p>
-                 ) : (
-                    <Button size="lg" className="w-full md:w-auto" onClick={handleContact} disabled={isContacting || authLoading}>
-                        {isContacting ? <Loader2 className="ml-2 h-5 w-5 animate-spin" /> : <MessageSquare className="ml-2 h-5 w-5" />}
-                        {isContacting ? 'جاري التحضير...' : (user ? 'تواصل مع صاحب العمل' : 'سجل الدخول للتواصل')}
+            
+            <div className="mt-8 pt-6 border-t">
+              <h3 className="text-lg font-bold mb-4 text-center">معلومات التواصل</h3>
+              <Card className="bg-card">
+                <CardContent className="p-4 flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
+                  <div className="flex items-center gap-3">
+                      <Phone className="h-6 w-6 text-primary" />
+                      <span className="text-lg font-semibold">{job.userPhone || "لم يضف رقم الهاتف"}</span>
+                  </div>
+                  {job.userPhone ? (
+                    <Button asChild>
+                      <a href={`tel:${job.userPhone}`}>
+                        <Phone className="ml-2 h-4 w-4" />
+                        اتصال
+                      </a>
                     </Button>
-                 )}
-                {!isOwnAd && <p className="text-xs text-muted-foreground mt-2">سيتم نقلك إلى صفحة المحادثة للتواصل.</p>}
+                  ) : (
+                      <Button disabled variant="outline">
+                        لا يوجد رقم للاتصال
+                      </Button>
+                  )}
+                </CardContent>
+              </Card>
             </div>
+
         </CardContent>
       </Card>
     </div>

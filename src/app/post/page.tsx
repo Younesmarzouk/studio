@@ -277,6 +277,9 @@ export default function PostPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
+                          <SelectItem value="construction">بناء</SelectItem>
+                          <SelectItem value="cleaning">تنظيف</SelectItem>
+                          <SelectItem value="childcare">رعاية أطفال</SelectItem>
                           <SelectItem value="carpentry">نجارة</SelectItem>
                           <SelectItem value="electricity">كهرباء</SelectItem>
                           <SelectItem value="plumbing">سباكة</SelectItem>
