@@ -7,14 +7,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { User, Phone, Mail, Award, Briefcase, Building, MapPin, Pencil, GalleryHorizontal } from 'lucide-react';
+import { User, Phone, Mail, Award, Briefcase, Building, MapPin, Pencil, GalleryHorizontal, List } from 'lucide-react';
 import Link from 'next/link';
 import PageHeader from '@/components/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { UserProfile } from '@/lib/types';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import type { User as FirebaseUser } from 'firebase/auth';
+import type { Job } from '@/lib/data';
+import JobCard from '@/components/job-card';
 
 const AccountPageSkeleton = () => (
     <div>
@@ -50,6 +52,7 @@ const AccountPageSkeleton = () => (
 
 export default function AccountPage() {
     const [user, setUser] = React.useState<UserProfile | null>(null);
+    const [myAds, setMyAds] = React.useState<Job[]>([]);
     const [loading, setLoading] = React.useState(true);
 
     React.useEffect(() => {
@@ -63,11 +66,32 @@ export default function AccountPage() {
                     } else {
                         console.error("User document not found in Firestore, but user exists in Auth.");
                     }
+
+                    // Fetch user's ads
+                    const adsCollection = collection(db, 'ads');
+                    const adsQuery = query(adsCollection, where('userId', '==', firebaseUser.uid), orderBy('createdAt', 'desc'));
+                    const adsSnapshot = await getDocs(adsQuery);
+                    const fetchedAds = adsSnapshot.docs.map(doc => {
+                        const data = doc.data();
+                        return {
+                            id: doc.id,
+                            title: data.title,
+                            city: data.city,
+                            price: data.price,
+                            rating: data.rating || 4.5,
+                            featured: data.featured || false,
+                            icon: data.category || 'Hammer',
+                            image: data.imageUrl,
+                        } as Job;
+                    });
+                    setMyAds(fetchedAds);
+
                 } catch (error) {
                     console.error("Error fetching user data:", error);
                 }
             } else {
                 setUser(null);
+                setMyAds([]);
             }
             setLoading(false);
         });
@@ -169,7 +193,24 @@ export default function AccountPage() {
                                 )) : <p className="text-muted-foreground">لا توجد خبرة مضافة.</p>}
                             </CardContent>
                         </Card>
-                        
+                         
+                         <Card className="shadow-md">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2"><List className="text-primary" /> إعلاناتي</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                {myAds.length > 0 ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        {myAds.map(ad => (
+                                            <JobCard key={ad.id} job={ad} />
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-muted-foreground">لم تقم بنشر أي إعلانات بعد.</p>
+                                )}
+                            </CardContent>
+                        </Card>
+
                         <Card className="shadow-md">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2"><GalleryHorizontal className="text-primary" /> معرض الأعمال</CardTitle>

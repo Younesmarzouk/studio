@@ -142,7 +142,7 @@ export default function PostPage() {
         });
         form.reset();
         setImagePreview(null);
-        router.push('/jobs');
+        router.push('/account');
     } catch (error: any) {
         console.error("Error posting ad: ", error);
         
