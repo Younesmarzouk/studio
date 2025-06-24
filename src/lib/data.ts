@@ -30,19 +30,19 @@ export const sliderItems: SliderItem[] = [
   {
     title: "وظائف مميزة",
     description: "أفضل العروض في مجالك",
-    image: "https://i.postimg.cc/zBNdnpC6/people-ar-work-company-12112019-1.jpg",
+    image: "https://placehold.co/800x400.png",
     "data-ai-hint": "job opportunity",
   },
   {
     title: "عمال محترفون",
     description: "خبراء معتمدون في جميع المجالات",
-    image: "https://i.postimg.cc/BbSqbdmv/images-2021-09-02-T035936-467.jpg",
+    image: "https://placehold.co/800x400.png",
     "data-ai-hint": "professional workers",
   },
   {
     title: "خدمات سريعة",
     description: "احصل على خدمتك في أسرع وقت",
-    image: "https://i.postimg.cc/4x7XYvQp/image.jpg",
+    image: "https://placehold.co/800x400.png",
     "data-ai-hint": "fast service",
   },
 ];
@@ -120,5 +120,3 @@ export const workers: Worker[] = [
     icon: "cooking",
   },
 ];
-
-    

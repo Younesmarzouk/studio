@@ -1,77 +1,29 @@
 "use client"
 
-import { Handshake, LogIn, LogOut } from "lucide-react";
-import Link from 'next/link';
-import { Button } from "./ui/button";
-import { auth } from "@/lib/firebase";
-import { useEffect, useState } from "react";
-import type { User } from "firebase/auth";
-import { signOut } from "firebase/auth";
-import { useRouter } from "next/navigation";
-import { useToast } from "@/hooks/use-toast";
-import { Skeleton } from "./ui/skeleton";
+import { Handshake, Moon } from "lucide-react";
 
 export default function HomeHeader() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const router = useRouter();
-  const { toast } = useToast();
 
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      setUser(user);
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      toast({ title: "تم تسجيل الخروج بنجاح." });
-      router.push('/login');
-    } catch (error) {
-      toast({ variant: 'destructive', title: "حدث خطأ أثناء تسجيل الخروج.", description: "يرجى المحاولة مرة أخرى." });
-    }
-  };
-
-  const renderAuthButton = () => {
-    if (loading) {
-      return <Skeleton className="h-10 w-24" />;
-    }
-
-    if (user) {
-      return (
-        <Button variant="secondary" onClick={handleLogout}>
-          <LogOut className="ml-2 h-4 w-4" />
-          خروج
-        </Button>
-      );
-    }
-
-    return (
-      <Link href="/login" passHref>
-        <Button variant="secondary">
-          <LogIn className="ml-2 h-4 w-4" />
-          دخول
-        </Button>
-      </Link>
-    );
+  // Dummy dark mode toggle for visual representation
+  const toggleDarkMode = () => {
+    document.documentElement.classList.toggle('dark');
   };
 
   return (
-    <header className="bg-primary p-4 shadow-lg text-primary-foreground">
+    <header className="bg-primary p-4 text-primary-foreground rounded-b-3xl z-10 relative">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="logo-icon p-2 bg-background rounded-lg">
-            <Handshake className="h-8 w-8 text-primary" />
+        <button onClick={toggleDarkMode} className="flex items-center justify-center h-10 w-10 bg-white/20 rounded-full hover:bg-white/30 transition-colors">
+            <Moon className="h-6 w-6 text-primary-foreground" />
+        </button>
+        <div className="flex flex-col items-end">
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold font-headline">Zafay</h1>
+            <div className="logo-icon p-1 bg-white rounded-md">
+                <Handshake className="h-6 w-6 text-primary" />
+            </div>
           </div>
-          <div className="logo-text">
-            <h1 className="text-xl font-bold font-headline">ZafayLink</h1>
-            <p className="text-xs text-background/80">منصة الربط بين العمال وأصحاب العمل</p>
-          </div>
+          <p className="text-xs text-primary-foreground/80 mt-1">منصة الربط بين العمال وأصحاب العمل</p>
         </div>
-        {renderAuthButton()}
       </div>
     </header>
   );

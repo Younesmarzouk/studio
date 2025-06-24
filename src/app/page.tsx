@@ -12,8 +12,6 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
 } from "@/components/carousel"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -91,19 +89,19 @@ export default function Home() {
 
 
   return (
-    <div className="flex flex-col w-full">
+    <div className="flex flex-col w-full bg-background">
       <HomeHeader />
 
-      <div className="p-4 bg-secondary/30">
-        <div className="relative">
-          <Input
+      <div className="p-4 bg-primary -mt-10">
+        <div className="relative flex items-center gap-2">
+           <Input
             type="search"
             placeholder="ابحث عن وظيفة، عامل، أو خدمة..."
-            className="w-full pl-10 pr-4 py-2 rounded-xl border-2 border-border bg-card"
+            className="w-full pl-4 pr-12 py-3 rounded-xl border-none shadow-md"
             dir="rtl"
           />
-          <Button variant="ghost" size="icon" className="absolute left-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground">
-            <Search className="h-5 w-5" />
+          <Button variant="default" size="icon" className="absolute left-2 h-9 w-9 rounded-lg">
+            <Search className="h-5 w-5 text-primary-foreground" />
           </Button>
         </div>
       </div>
@@ -123,44 +121,40 @@ export default function Home() {
           <CarouselContent>
             {sliderItems.map((item, index) => (
               <CarouselItem key={index}>
-                <Card className="overflow-hidden border-none shadow-lg">
-                  <CardContent className="relative flex aspect-video items-end justify-start p-0">
+                <Card className="overflow-hidden shadow-lg rounded-2xl">
+                  <CardContent className="relative flex aspect-[16/8] items-end justify-start p-0">
                     <Image src={item.image} alt={item.title} fill className="object-cover" data-ai-hint={item['data-ai-hint']} />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                     <div className="relative z-10 p-6 text-white w-full">
-                      <h3 className="text-xl font-bold font-headline">{item.title}</h3>
-                      <p className="text-sm">{item.description}</p>
+                      <h3 className="text-2xl font-bold font-headline">{item.title}</h3>
+                      <p className="text-base">{item.description}</p>
                     </div>
                   </CardContent>
                 </Card>
               </CarouselItem>
             ))}
           </CarouselContent>
-          <div className="hidden md:block">
-            <CarouselPrevious />
-            <CarouselNext />
-          </div>
         </Carousel>
       </div>
 
       <section className="py-6">
         <div className="flex justify-between items-center px-4 mb-4">
-          <h2 className="text-lg font-bold text-foreground">عروض العمل</h2>
+          <h2 className="text-xl font-bold text-foreground">عروض العمل</h2>
           <Link href="/jobs" className="flex items-center gap-1 text-sm text-primary font-semibold">
-            عرض الكل
+            <span>عرض الكل</span>
             <ChevronLeft className="h-4 w-4" />
           </Link>
         </div>
         <div className="flex overflow-x-auto gap-4 px-4 pb-4 scrollbar-hide">
           {loading ? (
              [...Array(4)].map((_, i) => (
-                <div key={i} className="flex-shrink-0 w-2/3 md:w-1/4">
-                  <Skeleton className="h-60 w-full rounded-lg" />
+                <div key={i} className="flex-shrink-0 w-[70%] md:w-[30%]">
+                  <Skeleton className="h-48 w-full rounded-lg" />
                 </div>
               ))
           ) : (
             jobs.map(job => (
-              <div key={job.id} className="flex-shrink-0 w-2/3 md:w-1/4">
+              <div key={job.id} className="flex-shrink-0 w-[70%] md:w-[30%]">
                 <JobCard job={job} />
               </div>
             ))
@@ -168,24 +162,24 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-6 bg-secondary/30">
+      <section className="py-6 bg-transparent">
         <div className="flex justify-between items-center px-4 mb-4">
-          <h2 className="text-lg font-bold text-foreground">باحثون عن عمل</h2>
+          <h2 className="text-xl font-bold text-foreground">باحثون عن عمل</h2>
           <Link href="/workers" className="flex items-center gap-1 text-sm text-primary font-semibold">
-            عرض الكل
+            <span>عرض الكل</span>
             <ChevronLeft className="h-4 w-4" />
           </Link>
         </div>
         <div className="flex overflow-x-auto gap-4 px-4 pb-4 scrollbar-hide">
           {loading ? (
              [...Array(4)].map((_, i) => (
-                <div key={i} className="flex-shrink-0 w-2/3 md:w-1/4">
-                  <Skeleton className="h-48 w-full" />
+                <div key={i} className="flex-shrink-0 w-[70%] md:w-[30%]">
+                  <Skeleton className="h-48 w-full rounded-lg" />
                 </div>
               ))
           ) : (
             workers.map(worker => (
-              <div key={worker.id} className="flex-shrink-0 w-2/3 md:w-1/4">
+              <div key={worker.id} className="flex-shrink-0 w-[70%] md:w-[30%]">
                 <WorkerCard worker={worker} />
               </div>
             ))
@@ -196,5 +190,3 @@ export default function Home() {
     </div>
   )
 }
-
-    
