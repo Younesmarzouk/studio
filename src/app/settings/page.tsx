@@ -6,19 +6,22 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { User, Bell, Globe, Moon, LogOut, ChevronRight, Paintbrush, Settings } from "lucide-react";
+import { User, Bell, Globe, Moon, LogOut, ChevronRight, Paintbrush, Settings, LogIn } from "lucide-react";
 import Link from 'next/link';
 import PageHeader from '@/components/page-header';
 import { useTheme } from '@/context/theme-provider';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const [notifications, setNotifications] = React.useState(true);
   const router = useRouter();
   const { toast } = useToast();
+  const [user, loading] = useAuthState(auth);
 
   const handleLogout = async () => {
     try {
@@ -28,6 +31,30 @@ export default function SettingsPage() {
     } catch (error) {
       toast({ variant: 'destructive', title: 'خطأ', description: 'فشل تسجيل الخروج.' });
     }
+  };
+
+  const renderAuthButton = () => {
+    if (loading) {
+      return <Skeleton className="h-10 w-full" />;
+    }
+
+    if (user) {
+      return (
+        <Button variant="destructive" className="w-full" onClick={handleLogout}>
+          <LogOut className="ml-2 h-4 w-4" />
+          تسجيل الخروج
+        </Button>
+      );
+    }
+
+    return (
+      <Button asChild className="w-full bg-green-600 hover:bg-green-700 text-primary-foreground">
+        <Link href="/login">
+          <LogIn className="ml-2 h-4 w-4" />
+          تسجيل الدخول أو إنشاء حساب
+        </Link>
+      </Button>
+    );
   };
 
   return (
@@ -87,11 +114,9 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
+          
+          {renderAuthButton()}
 
-            <Button variant="destructive" className="w-full" onClick={handleLogout}>
-              <LogOut className="ml-2 h-4 w-4" />
-              تسجيل الخروج
-            </Button>
         </div>
       </div>
     </div>
