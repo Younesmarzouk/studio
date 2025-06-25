@@ -63,7 +63,6 @@ export default function JobDetailPage() {
           }
         }
         
-        // Use phone from ad first, fallback to user's main phone if needed
         adData.userPhone = data.userPhone || "";
         
         setJob(adData);
