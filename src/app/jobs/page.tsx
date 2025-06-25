@@ -119,7 +119,7 @@ export default function JobsPage() {
       <PageHeader title="عروض العمل" icon={<Briefcase className="h-6 w-6" />} />
       <div className="p-4">
         
-        <div className="flex gap-2 mb-6">
+        <form onSubmit={(e) => e.preventDefault()} className="flex gap-2 mb-6">
           <div className="relative flex-grow">
             <Input
               type="search"
@@ -157,13 +157,13 @@ export default function JobsPage() {
                         <Label htmlFor="category-filter">الفئة / الحرفة</Label>
                         <Select
                             value={tempFilters.category}
-                            onValueChange={(value) => setTempFilters({ ...tempFilters, category: value })}
+                            onValueChange={(value) => setTempFilters({ ...tempFilters, category: value === 'all' ? '' : value })}
                         >
                             <SelectTrigger id="category-filter">
                                 <SelectValue placeholder="كل الفئات" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">كل الفئات</SelectItem>
+                                <SelectItem value="all">كل الفئات</SelectItem>
                                 {professions.map(prof => (
                                     <SelectItem key={prof.value} value={prof.value}>{prof.label}</SelectItem>
                                 ))}
@@ -174,13 +174,13 @@ export default function JobsPage() {
                         <Label htmlFor="work-type-filter">طبيعة العمل</Label>
                          <Select
                             value={tempFilters.workType}
-                            onValueChange={(value) => setTempFilters({ ...tempFilters, workType: value })}
+                            onValueChange={(value) => setTempFilters({ ...tempFilters, workType: value === 'all' ? '' : value })}
                         >
                             <SelectTrigger id="work-type-filter">
                                 <SelectValue placeholder="كل الأنواع" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">كل الأنواع</SelectItem>
+                                <SelectItem value="all">كل الأنواع</SelectItem>
                                 <SelectItem value="daily">يومي</SelectItem>
                                 <SelectItem value="part-time">دوام جزئي</SelectItem>
                                 <SelectItem value="seasonal">موسمي</SelectItem>
@@ -195,7 +195,7 @@ export default function JobsPage() {
                 </SheetFooter>
             </SheetContent>
           </Sheet>
-        </div>
+        </form>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {filteredJobs.length > 0 ? (

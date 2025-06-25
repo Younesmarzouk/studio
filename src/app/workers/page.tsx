@@ -104,7 +104,7 @@ export default function WorkersPage() {
       <PageHeader title="الباحثون عن عمل" icon={<Users className="h-6 w-6" />} />
       <div className="p-4">
         
-        <div className="flex gap-2 mb-6">
+        <form onSubmit={(e) => e.preventDefault()} className="flex gap-2 mb-6">
           <div className="relative flex-grow">
             <Input
               type="search"
@@ -142,13 +142,13 @@ export default function WorkersPage() {
                         <Label htmlFor="category-filter">الحرفة</Label>
                         <Select
                             value={tempFilters.category}
-                            onValueChange={(value) => setTempFilters({ ...tempFilters, category: value })}
+                            onValueChange={(value) => setTempFilters({ ...tempFilters, category: value === 'all' ? '' : value })}
                         >
                             <SelectTrigger id="category-filter">
                                 <SelectValue placeholder="كل الحرف" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">كل الحرف</SelectItem>
+                                <SelectItem value="all">كل الحرف</SelectItem>
                                 {professions.map(prof => (
                                     <SelectItem key={prof.value} value={prof.value}>{prof.label}</SelectItem>
                                 ))}
@@ -162,7 +162,7 @@ export default function WorkersPage() {
                 </SheetFooter>
             </SheetContent>
           </Sheet>
-        </div>
+        </form>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {filteredWorkers.length > 0 ? (
