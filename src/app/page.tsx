@@ -33,18 +33,19 @@ export default function Home() {
   )
 
   const [jobs, setJobs] = React.useState<Job[]>([]);
-  const [workers, setWorkers] = React.useState<Worker[]>([]);
+  const [workers, setWorkers] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            // Fetch jobs (latest ads of type 'job')
+            // Fetch latest ads
             const adsQuery = query(collection(db, "ads"), orderBy("createdAt", "desc"), limit(8)); 
             const adsSnapshot = await getDocs(adsQuery);
             const allRecentAds = adsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
+            // Filter for jobs
             const fetchedJobs = allRecentAds
                 .filter((ad: any) => ad.type === 'job')
                 .slice(0, 4) // Take the first 4 jobs
@@ -62,21 +63,10 @@ export default function Home() {
                 });
             setJobs(fetchedJobs);
             
-            // Fetch workers (user profiles)
-            const usersQuery = query(collection(db, "users"), limit(4));
-            const usersSnapshot = await getDocs(usersQuery);
-            const fetchedWorkers = usersSnapshot.docs.map(doc => {
-              const data = doc.data();
-              const profession = getProfessionByValue(data.title);
-              return {
-                id: doc.id,
-                name: data.name,
-                title: profession?.label || data.title || 'باحث عن عمل',
-                icon: profession?.value || 'other',
-                city: data.location || 'غير محدد',
-                rating: data.rating || 4.5,
-              } as Worker
-            });
+            // Filter for workers (job seekers) from the same ad fetch
+            const fetchedWorkers = allRecentAds
+                .filter((ad: any) => ad.type === 'worker')
+                .slice(0, 4); // Take the first 4 workers
             setWorkers(fetchedWorkers);
 
         } catch (error) {
