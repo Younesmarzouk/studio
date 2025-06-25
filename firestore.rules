@@ -1,0 +1,20 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read, write: if request.auth.uid == userId;
+    }
+
+    match /ads/{adId} {
+      allow read: if true;
+      allow create: if request.auth.uid != null;
+      allow delete: if request.auth.uid == resource.data.userId;
+
+      // Owner can update their own ad.
+      // Any authenticated user can update ONLY the 'likes' and 'likedBy' fields.
+      allow update: if request.auth.uid == resource.data.userId ||
+                     (request.auth.uid != null &&
+                      request.resource.data.diff(resource.data).affectedKeys.hasOnly(['likes', 'likedBy']));
+    }
+  }
+}

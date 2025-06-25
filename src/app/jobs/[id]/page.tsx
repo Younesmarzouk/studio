@@ -118,9 +118,13 @@ export default function JobDetailPage() {
             setLikeCount(prev => prev - 1);
             setIsLiked(false);
         }
-    } catch (e) {
+    } catch (e: any) {
         console.error("Like operation failed: ", e);
-        toast({ variant: 'destructive', title: 'حدث خطأ ما', description: "فشل تحديث التفاعل. الرجاء المحاولة مرة أخرى." });
+        let description = "فشل تحديث التفاعل. الرجاء المحاولة مرة أخرى.";
+        if (e.code === 'permission-denied') {
+            description = "ليست لديك الصلاحية لهذا الإجراء. قد تحتاج إلى مراجعة قواعد الأمان في Firestore.";
+        }
+        toast({ variant: 'destructive', title: 'حدث خطأ ما', description: description });
     } finally {
         setIsLiking(false);
     }
@@ -203,7 +207,7 @@ export default function JobDetailPage() {
             </div>
             {job.price && (<div className="flex items-center gap-1 text-muted-foreground">
                 <Wallet className="h-5 w-5" />
-                <span>{job.price}</span>
+                <span>{job.price} درهم</span>
             </div>)}
             {job.workType && (<div className="flex items-center gap-1 text-muted-foreground">
                 <Clock className="h-5 w-5" />

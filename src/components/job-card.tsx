@@ -63,7 +63,7 @@ export default function JobCard({ job, isEditable = false, onDeleteClick }: JobC
                   <div className="flex items-center gap-2">
                   <Wallet className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">الأجر:</span>
-                  <span>{job.price}</span>
+                  <span>{job.price} درهم</span>
                   </div>
               )}
               {job.workType && (
