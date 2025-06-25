@@ -17,6 +17,7 @@ import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, collection, query, where, getDocs, orderBy, deleteDoc } from 'firebase/firestore';
 import type { Job } from '@/lib/data';
 import JobCard from '@/components/job-card';
+import WorkerCard from '@/components/worker-card';
 import type { User as FirebaseUser } from 'firebase/auth';
 import {
   AlertDialog,
@@ -64,7 +65,7 @@ const AccountPageSkeleton = () => (
 
 export default function AccountPage() {
     const [user, setUser] = React.useState<UserProfile | null>(null);
-    const [myAds, setMyAds] = React.useState<Job[]>([]);
+    const [myAds, setMyAds] = React.useState<any[]>([]);
     const [loading, setLoading] = React.useState(true);
     const [adToDelete, setAdToDelete] = React.useState<string | null>(null);
     const { toast } = useToast();
@@ -92,15 +93,11 @@ export default function AccountPage() {
                         const data = doc.data();
                         return {
                             id: doc.id,
-                            title: data.title,
-                            city: data.city,
-                            price: data.price,
-                            rating: data.rating || 4.5,
-                            featured: data.featured || false,
+                            ...data,
+                            // Fields for JobCard compatibility
                             icon: data.category || 'other',
-                            workType: data.workType,
-                            createdAt: data.createdAt,
-                        } as Job & { createdAt: any };
+                            rating: data.rating || 4.5,
+                        };
                     });
 
                     setMyAds(fetchedAds);
@@ -239,7 +236,13 @@ export default function AccountPage() {
                                     {myAds.length > 0 ? (
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             {myAds.map(ad => (
-                                                <JobCard key={ad.id} job={ad} isEditable={true} onDeleteClick={handleDeleteClick} />
+                                                <div key={ad.id}>
+                                                    {ad.type === 'worker' ? (
+                                                        <WorkerCard worker={ad} isEditable={true} onDeleteClick={handleDeleteClick} />
+                                                    ) : (
+                                                        <JobCard job={ad} isEditable={true} onDeleteClick={handleDeleteClick} />
+                                                    )}
+                                                </div>
                                             ))}
                                         </div>
                                     ) : (

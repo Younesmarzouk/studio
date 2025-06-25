@@ -14,9 +14,10 @@ import PageHeader from '@/components/page-header';
 import { Skeleton } from "@/components/ui/skeleton";
 import type { UserProfile } from '@/lib/types';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import type { Job } from '@/lib/data';
 import JobCard from '@/components/job-card';
+import WorkerCard from '@/components/worker-card';
 import { useParams, notFound } from 'next/navigation';
 import { useAuthState } from 'react-firebase-hooks/auth';
 
@@ -57,7 +58,7 @@ export default function UserPage() {
     const [loggedInUser, authLoading] = useAuthState(auth);
     
     const [profileUser, setProfileUser] = React.useState<UserProfile | null>(null);
-    const [userAds, setUserAds] = React.useState<Job[]>([]);
+    const [userAds, setUserAds] = React.useState<any[]>([]);
     const [loading, setLoading] = React.useState(true);
 
     React.useEffect(() => {
@@ -80,25 +81,18 @@ export default function UserPage() {
                 }
 
                 const adsCollection = collection(db, 'ads');
-                const adsQuery = query(adsCollection, where('userId', '==', userId));
+                const adsQuery = query(adsCollection, where('userId', '==', userId), orderBy('createdAt', 'desc'));
                 const adsSnapshot = await getDocs(adsQuery);
                 const fetchedAds = adsSnapshot.docs.map(doc => {
                     const data = doc.data();
                     return {
                         id: doc.id,
-                        title: data.title,
-                        city: data.city,
-                        price: data.price,
+                        ...data,
+                        icon: data.category || 'other',
                         rating: data.rating || 4.5,
-                        featured: data.featured || false,
-                        icon: data.category || 'Hammer',
-                        workType: data.workType,
-                        createdAt: data.createdAt
-                    } as Job & { createdAt: any };
+                    };
                 });
                 
-                fetchedAds.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
-
                 setUserAds(fetchedAds);
 
             } catch (error) {
@@ -191,7 +185,13 @@ export default function UserPage() {
                                 {userAds.length > 0 ? (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         {userAds.map(ad => (
-                                            <JobCard key={ad.id} job={ad} />
+                                           <div key={ad.id}>
+                                                {ad.type === 'worker' ? (
+                                                    <WorkerCard worker={ad} />
+                                                ) : (
+                                                    <JobCard job={ad} />
+                                                )}
+                                            </div>
                                         ))}
                                     </div>
                                 ) : (
