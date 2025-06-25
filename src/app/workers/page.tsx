@@ -5,13 +5,12 @@ import WorkerCard from '@/components/worker-card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, SlidersHorizontal } from 'lucide-react';
-import type { Worker } from '@/lib/data';
 import PageHeader from '@/components/page-header';
 import { useEffect, useState, useMemo } from 'react';
-import { collection, getDocs, query } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getProfessionByValue, professions } from '@/lib/professions';
+import { professions } from '@/lib/professions';
 import {
   Sheet,
   SheetContent,
@@ -24,7 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function WorkersPage() {
-  const [workers, setWorkers] = useState<Worker[]>([]);
+  const [workers, setWorkers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
@@ -38,22 +37,15 @@ export default function WorkersPage() {
       const fetchWorkers = async () => {
           setLoading(true);
           try {
-              const usersCollection = collection(db, 'users');
-              const q = query(usersCollection);
+              const adsCollection = collection(db, 'ads');
+              const q = query(adsCollection, orderBy('createdAt', 'desc'));
               const querySnapshot = await getDocs(q);
-              const fetchedWorkers = querySnapshot.docs.map(doc => {
-                  const data = doc.data();
-                  const profession = getProfessionByValue(data.title);
-                  return {
-                    id: doc.id,
-                    name: data.name,
-                    title: profession?.label || data.title || 'باحث عن عمل',
-                    icon: profession?.value || 'other',
-                    city: data.location || 'غير محدد',
-                    rating: data.rating || 4.5,
-                  } as Worker
-              });
-              setWorkers(fetchedWorkers);
+              
+              const fetchedWorkerAds = querySnapshot.docs
+                .map(doc => ({ id: doc.id, ...doc.data() }))
+                .filter((ad: any) => ad.type === 'worker');
+
+              setWorkers(fetchedWorkerAds);
           } catch (error) {
               console.error("Error fetching workers: ", error);
           } finally {
@@ -77,14 +69,14 @@ export default function WorkersPage() {
   };
 
   const filteredWorkers = useMemo(() => {
-    return workers.filter(worker => {
+    return workers.filter(workerAd => {
       const searchTermMatch = !searchTerm ||
-        worker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        worker.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        worker.city.toLowerCase().includes(searchTerm.toLowerCase());
+        (workerAd.userName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (workerAd.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (workerAd.city || '').toLowerCase().includes(searchTerm.toLowerCase());
 
-      const cityMatch = !filters.city || worker.city.toLowerCase().includes(filters.city.toLowerCase());
-      const categoryMatch = !filters.category || worker.icon === filters.category;
+      const cityMatch = !filters.city || (workerAd.city || '').toLowerCase().includes(filters.city.toLowerCase());
+      const categoryMatch = !filters.category || workerAd.category === filters.category;
 
       return searchTermMatch && cityMatch && categoryMatch;
     });
