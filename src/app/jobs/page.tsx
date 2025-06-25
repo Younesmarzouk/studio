@@ -11,11 +11,29 @@ import { useEffect, useState, useMemo } from 'react';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetFooter,
+} from "@/components/ui/sheet"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { professions } from "@/lib/professions"
 
 export default function JobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    city: '',
+    category: '',
+    workType: '',
+  });
+  const [tempFilters, setTempFilters] = useState(filters);
 
   useEffect(() => {
       const fetchJobs = async () => {
@@ -50,16 +68,32 @@ export default function JobsPage() {
 
       fetchJobs();
   }, []);
+  
+  const handleApplyFilters = () => {
+    setFilters(tempFilters);
+    setIsFilterSheetOpen(false);
+  };
+
+  const handleClearFilters = () => {
+    const clearedFilters = { city: '', category: '', workType: '' };
+    setTempFilters(clearedFilters);
+    setFilters(clearedFilters);
+    setIsFilterSheetOpen(false);
+  };
 
   const filteredJobs = useMemo(() => {
-    if (!searchTerm) {
-      return jobs;
-    }
-    return jobs.filter(job =>
-      job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.city.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [searchTerm, jobs]);
+    return jobs.filter(job => {
+      const searchTermMatch = !searchTerm ||
+        job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        job.city.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const cityMatch = !filters.city || job.city.toLowerCase().includes(filters.city.toLowerCase());
+      const categoryMatch = !filters.category || job.icon === filters.category;
+      const workTypeMatch = !filters.workType || job.workType === filters.workType;
+
+      return searchTermMatch && cityMatch && categoryMatch && workTypeMatch;
+    });
+  }, [searchTerm, jobs, filters]);
 
   if (loading) {
     return (
@@ -97,9 +131,68 @@ export default function JobsPage() {
               <Search className="h-5 w-5" />
             </div>
           </div>
-          <Button variant="outline" size="icon" className="flex-shrink-0">
-            <SlidersHorizontal className="h-5 w-5" />
-          </Button>
+           <Sheet open={isFilterSheetOpen} onOpenChange={setIsFilterSheetOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="icon" className="flex-shrink-0">
+                <SlidersHorizontal className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[300px] sm:w-[400px]" dir="rtl">
+                <SheetHeader>
+                    <SheetTitle>فرز النتائج</SheetTitle>
+                </SheetHeader>
+                <div className="py-4 space-y-4">
+                    <div>
+                        <Label htmlFor="city-filter">المدينة</Label>
+                        <Input
+                            id="city-filter"
+                            placeholder="ابحث بالمدينة..."
+                            value={tempFilters.city}
+                            onChange={(e) => setTempFilters({ ...tempFilters, city: e.target.value })}
+                        />
+                    </div>
+                    <div>
+                        <Label htmlFor="category-filter">الفئة / الحرفة</Label>
+                        <Select
+                            value={tempFilters.category}
+                            onValueChange={(value) => setTempFilters({ ...tempFilters, category: value })}
+                        >
+                            <SelectTrigger id="category-filter">
+                                <SelectValue placeholder="كل الفئات" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="">كل الفئات</SelectItem>
+                                {professions.map(prof => (
+                                    <SelectItem key={prof.value} value={prof.value}>{prof.label}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div>
+                        <Label htmlFor="work-type-filter">طبيعة العمل</Label>
+                         <Select
+                            value={tempFilters.workType}
+                            onValueChange={(value) => setTempFilters({ ...tempFilters, workType: value })}
+                        >
+                            <SelectTrigger id="work-type-filter">
+                                <SelectValue placeholder="كل الأنواع" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="">كل الأنواع</SelectItem>
+                                <SelectItem value="daily">يومي</SelectItem>
+                                <SelectItem value="part-time">دوام جزئي</SelectItem>
+                                <SelectItem value="seasonal">موسمي</SelectItem>
+                                <SelectItem value="full-time">دوام كامل</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+                <SheetFooter>
+                    <Button variant="outline" onClick={handleClearFilters}>مسح الفلاتر</Button>
+                    <Button onClick={handleApplyFilters}>تطبيق</Button>
+                </SheetFooter>
+            </SheetContent>
+          </Sheet>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">

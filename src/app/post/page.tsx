@@ -115,6 +115,7 @@ export default function PostPage() {
         await addDoc(collection(db, "ads"), {
             userId: user.uid,
             userName: userData.name,
+            userPhone: userData.phone || "",
             userAvatar: userData.avatar || `https://api.dicebear.com/8.x/adventurer/svg?seed=${user.email}`,
             type: values.type,
             title: values.title,

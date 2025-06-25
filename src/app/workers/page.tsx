@@ -11,12 +11,28 @@ import { useEffect, useState, useMemo } from 'react';
 import { collection, getDocs, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getProfessionByValue } from '@/lib/professions';
+import { getProfessionByValue, professions } from '@/lib/professions';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetFooter,
+} from "@/components/ui/sheet";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function WorkersPage() {
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    city: '',
+    category: '',
+  });
+  const [tempFilters, setTempFilters] = useState(filters);
 
   useEffect(() => {
       const fetchWorkers = async () => {
@@ -47,17 +63,32 @@ export default function WorkersPage() {
 
       fetchWorkers();
   }, []);
+  
+  const handleApplyFilters = () => {
+    setFilters(tempFilters);
+    setIsFilterSheetOpen(false);
+  };
+
+  const handleClearFilters = () => {
+    const clearedFilters = { city: '', category: '' };
+    setTempFilters(clearedFilters);
+    setFilters(clearedFilters);
+    setIsFilterSheetOpen(false);
+  };
 
   const filteredWorkers = useMemo(() => {
-    if (!searchTerm) {
-      return workers;
-    }
-    return workers.filter(worker =>
-      worker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      worker.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      worker.city.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [searchTerm, workers]);
+    return workers.filter(worker => {
+      const searchTermMatch = !searchTerm ||
+        worker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        worker.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        worker.city.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const cityMatch = !filters.city || worker.city.toLowerCase().includes(filters.city.toLowerCase());
+      const categoryMatch = !filters.category || worker.icon === filters.category;
+
+      return searchTermMatch && cityMatch && categoryMatch;
+    });
+  }, [searchTerm, workers, filters]);
 
   if (loading) {
     return (
@@ -95,9 +126,50 @@ export default function WorkersPage() {
               <Search className="h-5 w-5" />
             </div>
           </div>
-          <Button variant="outline" size="icon" className="flex-shrink-0">
-            <SlidersHorizontal className="h-5 w-5" />
-          </Button>
+          <Sheet open={isFilterSheetOpen} onOpenChange={setIsFilterSheetOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="icon" className="flex-shrink-0">
+                <SlidersHorizontal className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[300px] sm:w-[400px]" dir="rtl">
+                <SheetHeader>
+                    <SheetTitle>فرز النتائج</SheetTitle>
+                </SheetHeader>
+                <div className="py-4 space-y-4">
+                    <div>
+                        <Label htmlFor="city-filter">المدينة</Label>
+                        <Input
+                            id="city-filter"
+                            placeholder="ابحث بالمدينة..."
+                            value={tempFilters.city}
+                            onChange={(e) => setTempFilters({ ...tempFilters, city: e.target.value })}
+                        />
+                    </div>
+                    <div>
+                        <Label htmlFor="category-filter">الحرفة</Label>
+                        <Select
+                            value={tempFilters.category}
+                            onValueChange={(value) => setTempFilters({ ...tempFilters, category: value })}
+                        >
+                            <SelectTrigger id="category-filter">
+                                <SelectValue placeholder="كل الحرف" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="">كل الحرف</SelectItem>
+                                {professions.map(prof => (
+                                    <SelectItem key={prof.value} value={prof.value}>{prof.label}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+                <SheetFooter>
+                    <Button variant="outline" onClick={handleClearFilters}>مسح الفلاتر</Button>
+                    <Button onClick={handleApplyFilters}>تطبيق</Button>
+                </SheetFooter>
+            </SheetContent>
+          </Sheet>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">

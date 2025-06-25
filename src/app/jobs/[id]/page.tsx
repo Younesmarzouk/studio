@@ -4,7 +4,7 @@
 import { notFound, useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Star, Calendar, Wallet, FileText, ChevronLeft, Phone, User as UserIcon, Clock } from 'lucide-react';
+import { MapPin, Star, Calendar, Wallet, FileText, ChevronLeft, Phone, User as UserIcon, Clock, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import * as React from 'react';
@@ -14,6 +14,7 @@ import type { Job } from '@/lib/data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { iconMap } from '@/lib/professions';
+import { useToast } from '@/hooks/use-toast';
 
 type Ad = Job & {
     description?: string;
@@ -38,6 +39,7 @@ export default function JobDetailPage() {
 
   const [job, setJob] = React.useState<Ad | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const { toast } = useToast();
   
   React.useEffect(() => {
     if (!id) return;
@@ -49,25 +51,23 @@ export default function JobDetailPage() {
 
       if (docSnap.exists()) {
         const data = docSnap.data();
+        let adData: Ad = { id: docSnap.id, ...data, icon: data.category || 'other' } as Ad;
+        
         if (data.userId) {
           const userRef = doc(db, 'users', data.userId);
           const userSnap = await getDoc(userRef);
           if (userSnap.exists()) {
               const userData = userSnap.data();
-              setJob({ 
-                  id: docSnap.id, 
-                  ...data,
-                  icon: data.category || 'other',
-                  userName: userData.name,
-                  userAvatar: userData.avatar || `https://api.dicebear.com/8.x/adventurer/svg?seed=${userData.email}`,
-                  userPhone: userData.phone,
-              } as Ad);
-          } else {
-               setJob({ id: docSnap.id, ...data, icon: data.category || 'other' } as Ad);
+              adData.userName = userData.name;
+              adData.userAvatar = userData.avatar || `https://api.dicebear.com/8.x/adventurer/svg?seed=${userData.email}`;
           }
-        } else {
-            setJob({ id: docSnap.id, ...data, icon: data.category || 'other' } as Ad);
         }
+        
+        // Use phone from ad first, fallback to user's main phone if needed
+        adData.userPhone = data.userPhone || "";
+        
+        setJob(adData);
+
       } else {
         setJob(null);
       }
@@ -76,6 +76,13 @@ export default function JobDetailPage() {
 
     fetchJob();
   }, [id]);
+
+  const handleCopy = (text: string) => {
+    if (text) {
+        navigator.clipboard.writeText(text);
+        toast({ title: "تم نسخ الرقم بنجاح!" });
+    }
+  };
 
   if (loading) {
     return (
@@ -200,15 +207,21 @@ export default function JobDetailPage() {
                 <CardContent className="p-4 flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
                   <div className="flex items-center gap-3">
                       <Phone className="h-6 w-6 text-primary" />
-                      <span className="text-lg font-semibold">{job.userPhone || "لم يضف رقم الهاتف"}</span>
+                      <span className="text-lg font-semibold tracking-wider">{job.userPhone || "لم يضف رقم الهاتف"}</span>
                   </div>
                   {job.userPhone ? (
-                    <Button asChild>
-                      <a href={`tel:${job.userPhone}`}>
-                        <Phone className="ml-2 h-4 w-4" />
-                        اتصال
-                      </a>
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button onClick={() => handleCopy(job.userPhone!)}>
+                            <Copy className="ml-2 h-4 w-4" />
+                            نسخ
+                        </Button>
+                        <Button asChild>
+                          <a href={`tel:${job.userPhone}`}>
+                            <Phone className="ml-2 h-4 w-4" />
+                            اتصال
+                          </a>
+                        </Button>
+                    </div>
                   ) : (
                       <Button disabled variant="outline">
                         لا يوجد رقم للاتصال
