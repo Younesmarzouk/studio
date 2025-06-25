@@ -91,7 +91,7 @@ export default function PostPage() {
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user) {
+    if (!user || !user.email) {
         toast({
             variant: "destructive",
             title: "يجب تسجيل الدخول أولاً",
@@ -115,7 +115,7 @@ export default function PostPage() {
         await addDoc(collection(db, "ads"), {
             userId: user.uid,
             userName: userData.name,
-            userAvatar: userData.avatar,
+            userAvatar: userData.avatar || `https://api.dicebear.com/8.x/adventurer/svg?seed=${user.email}`,
             type: values.type,
             title: values.title,
             category: values.category,

@@ -76,7 +76,11 @@ export default function AccountPage() {
                     const docRef = doc(db, 'users', firebaseUser.uid);
                     const docSnap = await getDoc(docRef);
                     if (docSnap.exists()) {
-                        setUser(docSnap.data() as UserProfile);
+                        const userData = docSnap.data();
+                        if (!userData.avatar && firebaseUser.email) {
+                            userData.avatar = `https://api.dicebear.com/8.x/adventurer/svg?seed=${firebaseUser.email}`;
+                        }
+                        setUser(userData as UserProfile);
                     } else {
                         console.error("User document not found in Firestore, but user exists in Auth.");
                     }

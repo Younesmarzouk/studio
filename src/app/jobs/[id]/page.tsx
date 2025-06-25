@@ -59,7 +59,7 @@ export default function JobDetailPage() {
                   ...data,
                   icon: data.category || 'other',
                   userName: userData.name,
-                  userAvatar: userData.avatar,
+                  userAvatar: userData.avatar || `https://api.dicebear.com/8.x/adventurer/svg?seed=${userData.email}`,
                   userPhone: userData.phone,
               } as Ad);
           } else {

@@ -133,7 +133,7 @@ export default function UserPage() {
                     <CardContent className="flex flex-col md:flex-row items-center gap-6 p-6 -mt-16">
                         <div className="relative">
                             <Avatar className="w-32 h-32 border-4 border-background shadow-lg">
-                                <AvatarImage src={profileUser.avatar} alt={profileUser.name} data-ai-hint="person face" />
+                                <AvatarImage src={profileUser.avatar || `https://api.dicebear.com/8.x/adventurer/svg?seed=${profileUser.email}`} alt={profileUser.name} data-ai-hint="person face" />
                                 <AvatarFallback>{profileUser.name?.charAt(0)}</AvatarFallback>
                             </Avatar>
                         </div>
