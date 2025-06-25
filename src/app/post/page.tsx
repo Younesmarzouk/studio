@@ -138,6 +138,8 @@ export default function PostPage() {
             createdAt: serverTimestamp(),
             featured: false,
             rating: 0,
+            likes: 0,
+            likedBy: [],
         });
         
         toast({

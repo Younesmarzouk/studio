@@ -3,10 +3,15 @@ import Link from 'next/link';
 import * as React from 'react';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, User as UserIcon, Pencil, Trash2 } from "lucide-react";
+import { MapPin, User as UserIcon, Pencil, Trash2, Heart } from "lucide-react";
 import { iconMap, getProfessionByValue } from '@/lib/professions';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth, db } from '@/lib/firebase';
+import { useToast } from '@/hooks/use-toast';
+import { doc, updateDoc, increment, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { cn } from '@/lib/utils';
 
 type WorkerCardProps = {
   worker: any; // Ad data object
@@ -18,6 +23,52 @@ export default function WorkerCard({ worker, isEditable = false, onDeleteClick }
   const profession = getProfessionByValue(worker.category);
   const IconComponent = profession?.icon || UserIcon;
   const professionLabel = profession?.label || worker.category;
+  
+  const [user] = useAuthState(auth);
+  const { toast } = useToast();
+
+  const [likeCount, setLikeCount] = React.useState(worker.likes || 0);
+  const [isLiked, setIsLiked] = React.useState(false);
+  const [isLiking, setIsLiking] = React.useState(false);
+
+  React.useEffect(() => {
+    if (user && worker.likedBy) {
+      setIsLiked(worker.likedBy.includes(user.uid));
+    }
+  }, [user, worker]);
+  
+  const handleLike = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) {
+        toast({ variant: 'destructive', title: 'يجب تسجيل الدخول أولاً' });
+        return;
+    }
+    if (isLiking) return;
+
+    setIsLiking(true);
+    const adRef = doc(db, 'ads', worker.id);
+    const newIsLiked = !isLiked;
+    const newLikeCount = isLiked ? likeCount - 1 : likeCount + 1;
+
+    setIsLiked(newIsLiked);
+    setLikeCount(newLikeCount);
+
+    try {
+        if (newIsLiked) {
+            await updateDoc(adRef, { likes: increment(1), likedBy: arrayUnion(user.uid) });
+        } else {
+            await updateDoc(adRef, { likes: increment(-1), likedBy: arrayRemove(user.uid) });
+        }
+    } catch (error) {
+        setIsLiked(!newIsLiked);
+        setLikeCount(isLiked ? newLikeCount + 1 : newLikeCount - 1);
+        toast({ variant: 'destructive', title: 'حدث خطأ ما' });
+    } finally {
+        setIsLiking(false);
+    }
+  };
 
   const handleDelete = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -28,8 +79,18 @@ export default function WorkerCard({ worker, isEditable = false, onDeleteClick }
   };
 
   return (
-    <Card className="overflow-hidden shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-in-out h-full flex flex-col text-right w-full bg-card rounded-2xl p-4">
+    <Card className="relative overflow-hidden shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-in-out h-full flex flex-col text-right w-full bg-card rounded-2xl p-4">
       <div className="flex-grow flex flex-col">
+       <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-2 left-2 h-8 w-8 rounded-full z-20 bg-card/70 hover:bg-card"
+          onClick={handleLike}
+          disabled={isLiking || !user}
+        >
+          <Heart className={cn("h-4 w-4 text-muted-foreground", isLiked && "fill-red-500 text-red-500")} />
+          <span className="sr-only">Like</span>
+        </Button>
         <Link href={`/users/${worker.userId}`} className="block h-full group flex flex-col flex-grow">
           <div className="flex-grow flex flex-col">
             <div className="flex items-center gap-4 mb-3">
@@ -49,6 +110,10 @@ export default function WorkerCard({ worker, isEditable = false, onDeleteClick }
               <div className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-muted-foreground" />
                 <span>{worker.city}</span>
+              </div>
+               <div className="flex items-center gap-2">
+                <Heart className="h-4 w-4 text-muted-foreground" />
+                <span>{likeCount} مهتمون</span>
               </div>
             </div>
           </div>

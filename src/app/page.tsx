@@ -71,6 +71,7 @@ export default function Home() {
                         featured: data.featured || false,
                         icon: data.category || 'other',
                         workType: data.workType,
+                        likes: data.likes || 0,
                     } as Job;
                 });
             setJobs(fetchedJobs);
@@ -78,7 +79,7 @@ export default function Home() {
             // Filter for workers (job seekers) from the same ad fetch
             const fetchedWorkers = allRecentAds
                 .filter((ad: any) => ad.type === 'worker')
-                .slice(0, 4); // Take the first 4 workers
+                .slice(0, 4); 
             setWorkers(fetchedWorkers);
 
         } catch (error) {

@@ -58,6 +58,7 @@ export default function JobsPage() {
                         featured: data.featured || false,
                         icon: data.category || 'other',
                         workType: data.workType,
+                        likes: data.likes || 0,
                     } as Job;
                 });
               setJobs(fetchedJobs);

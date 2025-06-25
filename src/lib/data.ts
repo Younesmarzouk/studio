@@ -15,6 +15,7 @@ export type Job = {
   featured: boolean;
   icon: string;
   workType?: "daily" | "part-time" | "seasonal" | "full-time";
+  likes?: number;
 };
 
 export type Worker = {
@@ -24,6 +25,7 @@ export type Worker = {
   city: string;
   rating: number;
   icon: string;
+  likes?: number;
 };
 
 

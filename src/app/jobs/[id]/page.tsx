@@ -4,17 +4,20 @@
 import { notFound, useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Star, Calendar, Wallet, FileText, ChevronLeft, Phone, User as UserIcon, Clock, Copy } from 'lucide-react';
+import { MapPin, Star, Calendar, Wallet, FileText, ChevronLeft, Phone, User as UserIcon, Clock, Copy, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import * as React from 'react';
-import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { db, auth } from '@/lib/firebase';
+import { doc, getDoc, updateDoc, increment, arrayUnion, arrayRemove } from 'firebase/firestore';
 import type { Job } from '@/lib/data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { iconMap } from '@/lib/professions';
 import { useToast } from '@/hooks/use-toast';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { cn } from '@/lib/utils';
+
 
 type Ad = Job & {
     description?: string;
@@ -24,6 +27,8 @@ type Ad = Job & {
     userAvatar?: string;
     userPhone?: string;
     workType?: string;
+    likes: number;
+    likedBy: string[];
 };
 
 const workTypeMap: { [key: string]: string } = {
@@ -36,10 +41,15 @@ const workTypeMap: { [key: string]: string } = {
 export default function JobDetailPage() {
   const params = useParams();
   const id = params.id as string;
-
+  const { toast } = useToast();
+  
   const [job, setJob] = React.useState<Ad | null>(null);
   const [loading, setLoading] = React.useState(true);
-  const { toast } = useToast();
+  
+  const [user, authLoading] = useAuthState(auth);
+  const [likeCount, setLikeCount] = React.useState(0);
+  const [isLiked, setIsLiked] = React.useState(false);
+  const [isLiking, setIsLiking] = React.useState(false);
   
   React.useEffect(() => {
     if (!id) return;
@@ -66,6 +76,7 @@ export default function JobDetailPage() {
         adData.userPhone = data.userPhone || "";
         
         setJob(adData);
+        setLikeCount(adData.likes || 0);
 
       } else {
         setJob(null);
@@ -76,6 +87,50 @@ export default function JobDetailPage() {
     fetchJob();
   }, [id]);
 
+  React.useEffect(() => {
+    if (user && job) {
+      setIsLiked((job.likedBy || []).includes(user.uid));
+    }
+  }, [user, job]);
+
+  const handleLike = async () => {
+    if (!user) {
+        toast({ variant: 'destructive', title: 'يجب تسجيل الدخول أولاً', description: "الرجاء تسجيل الدخول لتتمكن من التفاعل مع الإعلانات." });
+        return;
+    }
+    if (isLiking) return;
+
+    setIsLiking(true);
+    const adRef = doc(db, 'ads', id);
+
+    const newIsLiked = !isLiked;
+    const newLikeCount = isLiked ? likeCount - 1 : likeCount + 1;
+    
+    setIsLiked(newIsLiked);
+    setLikeCount(newLikeCount);
+
+    try {
+        if (newIsLiked) {
+            await updateDoc(adRef, {
+                likes: increment(1),
+                likedBy: arrayUnion(user.uid)
+            });
+        } else {
+            await updateDoc(adRef, {
+                likes: increment(-1),
+                likedBy: arrayRemove(user.uid)
+            });
+        }
+    } catch (e) {
+        setIsLiked(!newIsLiked);
+        setLikeCount(isLiked ? newLikeCount + 1 : newLikeCount - 1); 
+        console.error("Like operation failed: ", e);
+        toast({ variant: 'destructive', title: 'حدث خطأ ما', description: "فشل تحديث التفاعل. الرجاء المحاولة مرة أخرى." });
+    } finally {
+        setIsLiking(false);
+    }
+};
+
   const handleCopy = (text: string) => {
     if (text) {
         navigator.clipboard.writeText(text);
@@ -83,7 +138,7 @@ export default function JobDetailPage() {
     }
   };
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="p-4 md:p-6 max-w-3xl mx-auto">
         <Skeleton className="h-8 w-48 mb-4" />
@@ -123,8 +178,10 @@ export default function JobDetailPage() {
   const IconComponent = iconMap[job.icon] || UserIcon;
 
   return (
-    <div className="p-4 md:p-6 max-w-3xl mx-auto">
-        <Link href="/jobs" className="inline-flex items-center gap-2 text-sm text-muted-foreground mb-4 hover:text-primary">
+    <div>
+        <PageHeader title="تفاصيل الإعلان" icon={<FileText className="h-6 w-6" />} />
+        <div className="p-4 md:p-6 max-w-3xl mx-auto">
+        <Link href="/jobs" className="inline-flex items-center gap-2 text-sm text-primary-foreground mb-4 hover:underline">
             <ChevronLeft className="h-4 w-4" />
             العودة إلى كل الوظائف
         </Link>
@@ -132,8 +189,8 @@ export default function JobDetailPage() {
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
             <div className="flex items-center gap-4">
-                <div className="w-24 h-24 rounded-full bg-accent flex items-center justify-center flex-shrink-0">
-                    <IconComponent className="h-12 w-12 text-accent-foreground" />
+                <div className="w-24 h-24 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+                    <IconComponent className="h-12 w-12" />
                 </div>
                 <div>
                     <CardTitle className="text-2xl mb-1">{job.title}</CardTitle>
@@ -162,6 +219,12 @@ export default function JobDetailPage() {
              <div className="flex items-center gap-1 text-muted-foreground">
                 <Calendar className="h-5 w-5" />
                 <span>نشر قبل 3 أيام</span>
+            </div>
+             <div className="flex items-center gap-1 text-muted-foreground">
+                 <Button variant={isLiked ? "default" : "outline"} onClick={handleLike} disabled={isLiking} size="sm">
+                    <Heart className={cn("ml-2 h-4 w-4", isLiked && "fill-current")} />
+                    {isLiking ? 'جاري...' : (isLiked ? 'أنا مهتم' : 'مهتم')} ({likeCount})
+                </Button>
             </div>
           </div>
         </CardHeader>
@@ -201,7 +264,7 @@ export default function JobDetailPage() {
             </div>
             
             <div className="mt-8 pt-6 border-t">
-              <h3 className="text-lg font-bold mb-4 text-center">معلومات التواصل</h3>
+              <h3 className="text-lg font-bold mb-4 text-center text-primary">معلومات التواصل</h3>
               <Card className="bg-card">
                 <CardContent className="p-4 flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
                   <div className="flex items-center gap-3">
@@ -232,6 +295,8 @@ export default function JobDetailPage() {
 
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }
+

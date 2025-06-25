@@ -94,9 +94,10 @@ export default function AccountPage() {
                         return {
                             id: doc.id,
                             ...data,
-                            // Fields for JobCard compatibility
                             icon: data.category || 'other',
                             rating: data.rating || 4.5,
+                            likes: data.likes || 0,
+                            likedBy: data.likedBy || [],
                         };
                     });
 
@@ -158,7 +159,7 @@ export default function AccountPage() {
                     
                     <Card className="overflow-hidden mb-6 shadow-md">
                         <CardHeader className="p-0">
-                            <div className="bg-muted h-32" />
+                            <div className="bg-primary h-32" />
                         </CardHeader>
                         <CardContent className="flex flex-col md:flex-row items-center gap-6 p-6 -mt-16">
                             <div className="relative">
