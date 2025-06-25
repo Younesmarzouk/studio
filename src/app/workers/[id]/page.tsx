@@ -138,27 +138,23 @@ export default function WorkerAdDetailPage() {
     setIsLiking(true);
     const adRef = doc(db, 'ads', id);
 
-    const newIsLiked = !isLiked;
-    const newLikeCount = isLiked ? likeCount - 1 : likeCount + 1;
-    
-    setIsLiked(newIsLiked);
-    setLikeCount(newLikeCount);
-
     try {
-        if (newIsLiked) {
+        if (!isLiked) {
             await updateDoc(adRef, { likes: increment(1), likedBy: arrayUnion(user.uid) });
+            setLikeCount(prev => prev + 1);
+            setIsLiked(true);
         } else {
             await updateDoc(adRef, { likes: increment(-1), likedBy: arrayRemove(user.uid) });
+            setLikeCount(prev => prev - 1);
+            setIsLiked(false);
         }
     } catch (e) {
-        setIsLiked(!newIsLiked);
-        setLikeCount(isLiked ? newLikeCount + 1 : newLikeCount - 1); 
         console.error("Like operation failed: ", e);
         toast({ variant: 'destructive', title: 'حدث خطأ ما', description: "فشل تحديث التفاعل. الرجاء المحاولة مرة أخرى." });
     } finally {
         setIsLiking(false);
     }
-};
+  };
 
   const handleCopy = (text: string) => {
     if (text) {

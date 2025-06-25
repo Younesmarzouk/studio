@@ -52,24 +52,26 @@ export default function WorkerCard({ worker, isEditable = false, onDeleteClick }
 
     setIsLiking(true);
     const adRef = doc(db, 'ads', worker.id);
-    const newIsLiked = !isLiked;
-    const newLikeCount = isLiked ? likeCount - 1 : likeCount + 1;
-
-    // Optimistic update
-    setIsLiked(newIsLiked);
-    setLikeCount(newLikeCount);
 
     try {
-        if (newIsLiked) {
-            await updateDoc(adRef, { likes: increment(1), likedBy: arrayUnion(user.uid) });
+        if (!isLiked) {
+            await updateDoc(adRef, { 
+                likes: increment(1), 
+                likedBy: arrayUnion(user.uid) 
+            });
+            setLikeCount(prev => prev + 1);
+            setIsLiked(true);
         } else {
-            await updateDoc(adRef, { likes: increment(-1), likedBy: arrayRemove(user.uid) });
+            await updateDoc(adRef, { 
+                likes: increment(-1), 
+                likedBy: arrayRemove(user.uid) 
+            });
+            setLikeCount(prev => prev - 1);
+            setIsLiked(false);
         }
     } catch (error) {
-        // Revert UI on failure
-        setIsLiked(!newIsLiked);
-        setLikeCount(isLiked ? newLikeCount + 1 : newLikeCount - 1);
-        toast({ variant: 'destructive', title: 'حدث خطأ ما', description: "فشل تحديث التفاعل." });
+        console.error("Like operation failed: ", error);
+        toast({ variant: 'destructive', title: 'حدث خطأ ما', description: "فشل تحديث التفاعل. الرجاء المحاولة مرة أخرى." });
     } finally {
         setIsLiking(false);
     }
