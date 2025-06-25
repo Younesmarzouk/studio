@@ -24,7 +24,7 @@ export default function WorkerCard({ worker, isEditable = false, onDeleteClick }
   const IconComponent = profession?.icon || UserIcon;
   const professionLabel = profession?.label || worker.category;
   
-  const [user] = useAuthState(auth);
+  const [user, loading, error] = useAuthState(auth);
   const { toast } = useToast();
 
   const [likeCount, setLikeCount] = React.useState(worker.likes || 0);
@@ -34,6 +34,8 @@ export default function WorkerCard({ worker, isEditable = false, onDeleteClick }
   React.useEffect(() => {
     if (user && worker.likedBy) {
       setIsLiked(worker.likedBy.includes(user.uid));
+    } else {
+      setIsLiked(false);
     }
   }, [user, worker]);
   
@@ -52,6 +54,7 @@ export default function WorkerCard({ worker, isEditable = false, onDeleteClick }
     const newIsLiked = !isLiked;
     const newLikeCount = isLiked ? likeCount - 1 : likeCount + 1;
 
+    // Optimistic update
     setIsLiked(newIsLiked);
     setLikeCount(newLikeCount);
 
@@ -62,9 +65,10 @@ export default function WorkerCard({ worker, isEditable = false, onDeleteClick }
             await updateDoc(adRef, { likes: increment(-1), likedBy: arrayRemove(user.uid) });
         }
     } catch (error) {
+        // Revert UI on failure
         setIsLiked(!newIsLiked);
         setLikeCount(isLiked ? newLikeCount + 1 : newLikeCount - 1);
-        toast({ variant: 'destructive', title: 'حدث خطأ ما' });
+        toast({ variant: 'destructive', title: 'حدث خطأ ما', description: "فشل تحديث التفاعل." });
     } finally {
         setIsLiking(false);
     }
@@ -86,7 +90,7 @@ export default function WorkerCard({ worker, isEditable = false, onDeleteClick }
           size="icon"
           className="absolute top-2 left-2 h-8 w-8 rounded-full z-20 bg-card/70 hover:bg-card"
           onClick={handleLike}
-          disabled={isLiking || !user}
+          disabled={isLiking || loading}
         >
           <Heart className={cn("h-4 w-4 text-muted-foreground", isLiked && "fill-red-500 text-red-500")} />
           <span className="sr-only">Like</span>

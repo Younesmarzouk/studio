@@ -17,6 +17,7 @@ import { iconMap } from '@/lib/professions';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { cn } from '@/lib/utils';
+import PageHeader from '@/components/page-header';
 
 
 type Ad = Job & {
@@ -73,8 +74,6 @@ export default function JobDetailPage() {
           }
         }
         
-        adData.userPhone = data.userPhone || "";
-        
         setJob(adData);
         setLikeCount(adData.likes || 0);
 
@@ -106,6 +105,7 @@ export default function JobDetailPage() {
     const newIsLiked = !isLiked;
     const newLikeCount = isLiked ? likeCount - 1 : likeCount + 1;
     
+    // Optimistic UI update
     setIsLiked(newIsLiked);
     setLikeCount(newLikeCount);
 
@@ -122,6 +122,7 @@ export default function JobDetailPage() {
             });
         }
     } catch (e) {
+        // Revert UI on failure
         setIsLiked(!newIsLiked);
         setLikeCount(isLiked ? newLikeCount + 1 : newLikeCount - 1); 
         console.error("Like operation failed: ", e);
@@ -193,7 +194,7 @@ export default function JobDetailPage() {
                     <IconComponent className="h-12 w-12" />
                 </div>
                 <div>
-                    <CardTitle className="text-2xl mb-1">{job.title}</CardTitle>
+                    <CardTitle className="text-2xl mb-1 text-primary">{job.title}</CardTitle>
                     <div className="flex items-center gap-1 text-base text-muted-foreground">
                         <MapPin className="h-5 w-5" />
                         <span>{job.city}</span>
@@ -221,7 +222,7 @@ export default function JobDetailPage() {
                 <span>نشر قبل 3 أيام</span>
             </div>
              <div className="flex items-center gap-1 text-muted-foreground">
-                 <Button variant={isLiked ? "default" : "outline"} onClick={handleLike} disabled={isLiking} size="sm">
+                 <Button variant={isLiked ? "default" : "outline"} onClick={handleLike} disabled={isLiking || authLoading} size="sm">
                     <Heart className={cn("ml-2 h-4 w-4", isLiked && "fill-current")} />
                     {isLiking ? 'جاري...' : (isLiked ? 'أنا مهتم' : 'مهتم')} ({likeCount})
                 </Button>
@@ -231,7 +232,7 @@ export default function JobDetailPage() {
         <CardContent>
             <div className="space-y-6">
                 <div>
-                    <h3 className="font-bold text-lg mb-2 flex items-center gap-2"><FileText className="text-primary"/> وصف الوظيفة</h3>
+                    <h3 className="font-bold text-lg mb-2 flex items-center gap-2 text-primary"><FileText /> وصف الوظيفة</h3>
                     <p className="text-muted-foreground leading-relaxed">
                         {job.description || "لا يوجد وصف متوفر."}
                     </p>
@@ -299,4 +300,3 @@ export default function JobDetailPage() {
     </div>
   );
 }
-
