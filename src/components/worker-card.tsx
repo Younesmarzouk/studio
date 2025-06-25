@@ -48,7 +48,7 @@ export default function WorkerCard({ worker, isEditable = false, onDeleteClick }
         toast({ variant: 'destructive', title: 'يجب تسجيل الدخول أولاً' });
         return;
     }
-    if (isLiking) return;
+    if (isLiking || !worker.id) return;
 
     setIsLiking(true);
     const adRef = doc(db, 'ads', worker.id);
@@ -97,7 +97,7 @@ export default function WorkerCard({ worker, isEditable = false, onDeleteClick }
             <span className="sr-only">Like</span>
           </Button>
 
-          <Link href={`/users/${worker.userId}`} className="block h-full group flex flex-col flex-grow">
+          <Link href={`/workers/${worker.id}`} className="block h-full group flex flex-col flex-grow">
               <div className="flex items-center gap-4 mb-3">
                 <div className="flex-shrink-0 w-16 h-16 bg-secondary rounded-xl flex items-center justify-center">
                   <IconComponent className="h-8 w-8 text-primary" />
@@ -128,7 +128,7 @@ export default function WorkerCard({ worker, isEditable = false, onDeleteClick }
                   <Heart className="h-4 w-4" />
                 </div>
                 <div className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium h-9 px-4 bg-primary text-primary-foreground group-hover:bg-primary/90 transition-colors">
-                  عرض الملف الشخصي
+                  عرض التفاصيل
                 </div>
               </div>
             </div>

@@ -23,7 +23,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 
 const UserPageSkeleton = () => (
     <div>
-        <PageHeader title="ملف شخصي" icon={<User className="h-6 w-6" />} />
+        <PageHeader title="ملف شخصي" icon={<User className="h-6 w-6" />} showBackButton />
         <div className="p-4 md:p-6 lg:p-8 max-w-4xl mx-auto">
             <Card className="overflow-hidden mb-6">
                 <Skeleton className="h-32 w-full" />
@@ -117,7 +117,7 @@ export default function UserPage() {
 
     return (
         <div>
-            <PageHeader title={`ملف ${profileUser.name}`} icon={<User className="h-6 w-6" />} />
+            <PageHeader title={`ملف ${profileUser.name}`} icon={<User className="h-6 w-6" />} showBackButton />
             <div className="p-4 md:p-6 lg:p-8 max-w-4xl mx-auto bg-background">
                 
                 <Card className="overflow-hidden mb-6 shadow-md">

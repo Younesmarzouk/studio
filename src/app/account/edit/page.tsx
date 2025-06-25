@@ -25,7 +25,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
-import { User, Briefcase, MapPin, Mail, Phone, Save, ChevronLeft, Loader2, Award } from "lucide-react"
+import { User, Briefcase, MapPin, Mail, Phone, Save, Loader2, Award, Pencil } from "lucide-react"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
@@ -36,6 +36,7 @@ import { auth, db } from "@/lib/firebase"
 import type { User as FirebaseUser } from 'firebase/auth';
 import { Skeleton } from "@/components/ui/skeleton"
 import { professions } from "@/lib/professions"
+import PageHeader from "@/components/page-header"
 
 const profileFormSchema = z.object({
   name: z.string().min(2, { message: "الاسم يجب أن يكون حرفين على الأقل." }),
@@ -51,32 +52,34 @@ const profileFormSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 const EditPageSkeleton = () => (
-    <div className="p-4 md:p-6 lg:p-8 max-w-2xl mx-auto">
-        <Skeleton className="h-6 w-40 mb-4" />
-        <Card>
-            <CardHeader><Skeleton className="h-8 w-48" /><Skeleton className="h-4 w-64 mt-2" /></CardHeader>
-            <CardContent className="space-y-8">
-                <Skeleton className="h-24 w-24 rounded-full" />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                </div>
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-24 w-full" />
-                <Skeleton className="h-10 w-full" />
-                 <Card>
-                    <CardHeader><Skeleton className="h-6 w-32" /></CardHeader>
-                    <CardContent className="space-y-4">
+    <div>
+        <PageHeader title="تعديل الملف الشخصي" icon={<Pencil className="h-6 w-6" />} showBackButton />
+        <div className="p-4 md:p-6 lg:p-8 max-w-2xl mx-auto">
+            <Card>
+                <CardHeader><Skeleton className="h-8 w-48" /><Skeleton className="h-4 w-64 mt-2" /></CardHeader>
+                <CardContent className="space-y-8 pt-6">
+                    <Skeleton className="h-24 w-24 rounded-full" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <Skeleton className="h-10 w-full" />
                         <Skeleton className="h-10 w-full" />
-                    </CardContent>
-                </Card>
-                <div className="flex justify-end gap-2 pt-4">
-                    <Skeleton className="h-10 w-24" />
-                    <Skeleton className="h-10 w-32" />
-                </div>
-            </CardContent>
-        </Card>
+                    </div>
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                     <Card>
+                        <CardHeader><Skeleton className="h-6 w-32" /></CardHeader>
+                        <CardContent className="space-y-4 pt-6">
+                            <Skeleton className="h-10 w-full" />
+                            <Skeleton className="h-10 w-full" />
+                        </CardContent>
+                    </Card>
+                    <div className="flex justify-end gap-2 pt-4">
+                        <Skeleton className="h-10 w-24" />
+                        <Skeleton className="h-10 w-32" />
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
     </div>
 );
 
@@ -175,14 +178,12 @@ export default function EditAccountPage() {
   }
 
   return (
+    <>
+    <PageHeader title="تعديل الملف الشخصي" icon={<Pencil className="h-6 w-6" />} showBackButton />
     <div className="p-4 md:p-6 lg:p-8 max-w-2xl mx-auto bg-background">
-       <Link href="/account" className="inline-flex items-center gap-2 text-sm text-muted-foreground mb-4 hover:text-primary">
-            <ChevronLeft className="h-4 w-4" />
-            العودة إلى الملف الشخصي
-        </Link>
       <Card className="shadow-md">
         <CardHeader>
-          <CardTitle>تعديل الملف الشخصي</CardTitle>
+          <CardTitle>تحديث معلوماتك</CardTitle>
           <CardDescription>قم بتحديث معلوماتك الشخصية والمهنية هنا.</CardDescription>
         </CardHeader>
         <CardContent>
@@ -366,5 +367,6 @@ export default function EditAccountPage() {
         </CardContent>
       </Card>
     </div>
+    </>
   )
 }

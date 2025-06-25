@@ -31,7 +31,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, Save, ChevronLeft, Pencil } from "lucide-react"
+import { Loader2, Save, Pencil } from "lucide-react"
 import PageHeader from "@/components/page-header"
 import { auth, db } from "@/lib/firebase"
 import { doc, getDoc, updateDoc } from "firebase/firestore"
@@ -54,9 +54,8 @@ type FormValues = z.infer<typeof formSchema>;
 
 const EditAdSkeleton = () => (
     <div>
-        <PageHeader title="تعديل الإعلان" icon={<Pencil className="h-6 w-6" />} />
+        <PageHeader title="تعديل الإعلان" icon={<Pencil className="h-6 w-6" />} showBackButton />
         <div className="p-4 max-w-2xl mx-auto">
-            <Skeleton className="h-6 w-40 mb-4" />
             <Card>
                 <CardHeader>
                     <Skeleton className="h-8 w-48" />
@@ -177,12 +176,8 @@ export default function EditAdPage() {
   
   return (
     <div>
-      <PageHeader title="تعديل الإعلان" icon={<Pencil className="h-6 w-6" />} />
+      <PageHeader title="تعديل الإعلان" icon={<Pencil className="h-6 w-6" />} showBackButton />
       <div className="p-4 max-w-2xl mx-auto">
-         <Link href="/account" className="inline-flex items-center gap-2 text-sm text-muted-foreground mb-4 hover:text-primary">
-            <ChevronLeft className="h-4 w-4" />
-            العودة إلى حسابي
-        </Link>
         <Card>
            <CardHeader>
                 <CardTitle>تعديل معلومات الإعلان</CardTitle>

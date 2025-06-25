@@ -4,7 +4,7 @@
 import { notFound, useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Star, Calendar, Wallet, FileText, ChevronLeft, Phone, User as UserIcon, Clock, Copy, Heart } from 'lucide-react';
+import { MapPin, Star, Calendar, Wallet, FileText, Phone, User as UserIcon, Clock, Copy, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import * as React from 'react';
@@ -141,33 +141,35 @@ export default function JobDetailPage() {
 
   if (loading || authLoading) {
     return (
-      <div className="p-4 md:p-6 max-w-3xl mx-auto">
-        <Skeleton className="h-8 w-48 mb-4" />
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-4 mb-2">
-              <Skeleton className="w-24 h-24 rounded-full" />
-              <div className="space-y-2">
-                <Skeleton className="h-8 w-64" />
-                <Skeleton className="h-4 w-32" />
-              </div>
-            </div>
-            <div className="flex items-center gap-4 pt-4 border-t mt-4 flex-wrap">
-              <Skeleton className="h-6 w-24" />
-              <Skeleton className="h-6 w-32" />
-              <Skeleton className="h-6 w-28" />
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <Skeleton className="h-6 w-48 mb-2" />
-            <Skeleton className="h-20 w-full" />
-             <Skeleton className="h-6 w-32 mb-2" />
-            <Skeleton className="h-24 w-full" />
-            <div className="mt-8 pt-6 border-t text-center">
-              <Skeleton className="h-12 w-48 mx-auto" />
-            </div>
-          </CardContent>
-        </Card>
+      <div>
+        <PageHeader title="تفاصيل الإعلان" icon={<FileText className="h-6 w-6" />} showBackButton />
+        <div className="p-4 md:p-6 max-w-3xl mx-auto">
+            <Card>
+            <CardHeader>
+                <div className="flex items-center gap-4 mb-2">
+                <Skeleton className="w-24 h-24 rounded-full" />
+                <div className="space-y-2">
+                    <Skeleton className="h-8 w-64" />
+                    <Skeleton className="h-4 w-32" />
+                </div>
+                </div>
+                <div className="flex items-center gap-4 pt-4 border-t mt-4 flex-wrap">
+                <Skeleton className="h-6 w-24" />
+                <Skeleton className="h-6 w-32" />
+                <Skeleton className="h-6 w-28" />
+                </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <Skeleton className="h-6 w-48 mb-2" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-6 w-32 mb-2" />
+                <Skeleton className="h-24 w-full" />
+                <div className="mt-8 pt-6 border-t text-center">
+                <Skeleton className="h-12 w-48 mx-auto" />
+                </div>
+            </CardContent>
+            </Card>
+        </div>
       </div>
     );
   }
@@ -180,12 +182,8 @@ export default function JobDetailPage() {
 
   return (
     <div>
-        <PageHeader title="تفاصيل الإعلان" icon={<FileText className="h-6 w-6" />} />
+        <PageHeader title="تفاصيل الإعلان" icon={<FileText className="h-6 w-6" />} showBackButton />
         <div className="p-4 md:p-6 max-w-3xl mx-auto">
-        <Link href="/jobs" className="inline-flex items-center gap-2 text-sm text-primary-foreground mb-4 hover:underline">
-            <ChevronLeft className="h-4 w-4" />
-            العودة إلى كل الوظائف
-        </Link>
       <Card className="overflow-hidden">
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
@@ -215,7 +213,7 @@ export default function JobDetailPage() {
             </div>)}
             {job.workType && (<div className="flex items-center gap-1 text-muted-foreground">
                 <Clock className="h-5 w-5" />
-                <span>{workTypeMap[job.workType] || job.workType}</span>
+                <span>{workTypeMap[job.workType]}</span>
             </div>)}
              <div className="flex items-center gap-1 text-muted-foreground">
                 <Calendar className="h-5 w-5" />
