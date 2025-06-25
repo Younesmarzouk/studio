@@ -30,7 +30,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
-import { Briefcase, UserPlus, Loader2, Clock } from "lucide-react"
+import { Briefcase, UserPlus, Loader2, Clock, Phone } from "lucide-react"
 import PageHeader from "@/components/page-header"
 import { auth, db } from "@/lib/firebase"
 import { addDoc, collection, doc, getDoc, serverTimestamp } from "firebase/firestore"
@@ -47,10 +47,13 @@ const formSchema = z.object({
   description: z.string().min(10, "يجب أن يكون الوصف 10 أحرف على الأقل.").max(500, "يجب أن يكون الوصف 500 حرف على الأكثر."),
   city: z.string().min(2, "يجب إدخال اسم المدينة."),
   price: z.string().optional(),
+  userPhone: z.string().min(10, { message: "الرجاء إدخال رقم هاتف صحيح." }),
   workType: z.enum(["daily", "part-time", "seasonal", "full-time"], {
     required_error: "الرجاء تحديد طبيعة العمل.",
   }),
 })
+
+type FormValues = z.infer<typeof formSchema>;
 
 export default function PostPage() {
   const router = useRouter()
@@ -59,7 +62,7 @@ export default function PostPage() {
   const [loading, setLoading] = React.useState(true)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       type: 'job',
@@ -68,14 +71,22 @@ export default function PostPage() {
       description: '',
       city: '',
       price: '',
+      userPhone: '',
       workType: 'daily',
     },
   })
   
   React.useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
         if (currentUser) {
             setUser(currentUser);
+             const userDocRef = doc(db, 'users', currentUser.uid);
+             const userDocSnap = await getDoc(userDocRef);
+             if (userDocSnap.exists()) {
+                 const userData = userDocSnap.data();
+                 form.setValue('city', userData.location && userData.location !== 'غير محدد' ? userData.location : '');
+                 form.setValue('userPhone', userData.phone || '');
+             }
         } else {
             toast({
                 variant: "destructive",
@@ -87,10 +98,10 @@ export default function PostPage() {
         setLoading(false);
     });
     return () => unsubscribe();
-  }, [router, toast]);
+  }, [router, toast, form]);
 
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: FormValues) {
     if (!user || !user.email) {
         toast({
             variant: "destructive",
@@ -115,7 +126,7 @@ export default function PostPage() {
         await addDoc(collection(db, "ads"), {
             userId: user.uid,
             userName: userData.name,
-            userPhone: userData.phone || "",
+            userPhone: values.userPhone,
             userAvatar: userData.avatar || `https://api.dicebear.com/8.x/adventurer/svg?seed=${user.email}`,
             type: values.type,
             title: values.title,
@@ -323,6 +334,23 @@ export default function PostPage() {
                   />
                 </div>
 
+                 <FormField
+                  control={form.control}
+                  name="userPhone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2"><Phone className="h-4 w-4"/> رقم هاتف التواصل</FormLabel>
+                      <FormControl>
+                        <Input type="tel" placeholder="مثال: 0612345678" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        سيتم عرض هذا الرقم في الإعلان للتواصل معك.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <FormField
                   control={form.control}
                   name="workType"
@@ -375,4 +403,5 @@ export default function PostPage() {
       </div>
     </div>
   )
-}
+
+    
