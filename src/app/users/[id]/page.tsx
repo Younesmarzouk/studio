@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { User, Phone, Mail, Award, Briefcase, Building, MapPin, Pencil, GalleryHorizontal, List } from 'lucide-react';
 import Link from 'next/link';
 import PageHeader from '@/components/page-header';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from "@/components/ui/skeleton";
 import type { UserProfile } from '@/lib/types';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
@@ -22,7 +22,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 
 const UserPageSkeleton = () => (
     <div>
-        <PageHeader title="ملف شخصي" />
+        <PageHeader title="ملف شخصي" icon={<User className="h-6 w-6" />} />
         <div className="p-4 md:p-6 lg:p-8 max-w-4xl mx-auto">
             <Card className="overflow-hidden mb-6">
                 <Skeleton className="h-32 w-full" />
@@ -123,7 +123,7 @@ export default function UserPage() {
 
     return (
         <div>
-            <PageHeader title={`ملف ${profileUser.name}`} />
+            <PageHeader title={`ملف ${profileUser.name}`} icon={<User className="h-6 w-6" />} />
             <div className="p-4 md:p-6 lg:p-8 max-w-4xl mx-auto bg-background">
                 
                 <Card className="overflow-hidden mb-6 shadow-md">

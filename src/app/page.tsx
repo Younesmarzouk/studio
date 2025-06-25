@@ -26,6 +26,7 @@ import { collection, getDocs, limit, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getProfessionByValue } from '@/lib/professions';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
   const plugin = React.useRef(
@@ -35,6 +36,17 @@ export default function Home() {
   const [jobs, setJobs] = React.useState<Job[]>([]);
   const [workers, setWorkers] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const router = useRouter();
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+        router.push(`/jobs?q=${searchTerm.trim()}`);
+    } else {
+        router.push('/jobs');
+    }
+  };
 
   React.useEffect(() => {
     const fetchData = async () => {
@@ -84,17 +96,19 @@ export default function Home() {
       <HomeHeader />
 
       <div className="px-4 -mt-8 z-10">
-        <div className="relative flex items-center bg-card p-2 rounded-2xl shadow-md">
+        <form onSubmit={handleSearch} className="relative flex items-center bg-card p-2 rounded-2xl shadow-md">
            <Input
             type="search"
             placeholder="ابحث عن وظيفة، عامل، أو خدمة..."
             className="w-full pl-4 pr-12 py-3 border-none bg-transparent focus-visible:ring-0 text-base"
             dir="rtl"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <Button variant="default" size="icon" className="absolute left-2 h-10 w-10 rounded-lg text-white">
+          <Button type="submit" variant="default" size="icon" className="absolute left-2 h-10 w-10 rounded-lg text-white">
             <Search className="h-5 w-5" />
           </Button>
-        </div>
+        </form>
       </div>
       
       <div className="px-4 pt-6">

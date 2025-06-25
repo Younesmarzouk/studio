@@ -4,13 +4,14 @@
 import JobCard from '@/components/job-card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, SlidersHorizontal } from 'lucide-react';
+import { Search, SlidersHorizontal, Briefcase } from 'lucide-react';
 import type { Job } from '@/lib/data';
 import PageHeader from '@/components/page-header';
 import { useEffect, useState, useMemo } from 'react';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useSearchParams } from 'next/navigation';
 import {
   Sheet,
   SheetContent,
@@ -24,9 +25,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { professions } from "@/lib/professions"
 
 export default function JobsPage() {
+  const searchParams = useSearchParams();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '');
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [filters, setFilters] = useState({
     city: '',
@@ -98,7 +100,7 @@ export default function JobsPage() {
   if (loading) {
     return (
         <div>
-            <PageHeader title="عروض العمل" />
+            <PageHeader title="عروض العمل" icon={<Briefcase className="h-6 w-6" />} />
             <div className="p-4">
                 <div className="flex gap-2 mb-6">
                     <Skeleton className="h-12 flex-grow rounded-xl" />
@@ -114,7 +116,7 @@ export default function JobsPage() {
 
   return (
     <div>
-      <PageHeader title="عروض العمل" />
+      <PageHeader title="عروض العمل" icon={<Briefcase className="h-6 w-6" />} />
       <div className="p-4">
         
         <div className="flex gap-2 mb-6">

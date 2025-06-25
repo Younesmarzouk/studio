@@ -4,7 +4,7 @@
 import WorkerCard from '@/components/worker-card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, SlidersHorizontal } from 'lucide-react';
+import { Search, SlidersHorizontal, Users } from 'lucide-react';
 import PageHeader from '@/components/page-header';
 import { useEffect, useState, useMemo } from 'react';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
@@ -85,7 +85,7 @@ export default function WorkersPage() {
   if (loading) {
     return (
         <div>
-            <PageHeader title="الباحثون عن عمل" />
+            <PageHeader title="الباحثون عن عمل" icon={<Users className="h-6 w-6" />} />
             <div className="p-4">
                 <div className="flex gap-2 mb-6">
                     <Skeleton className="h-12 flex-grow rounded-xl" />
@@ -101,7 +101,7 @@ export default function WorkersPage() {
 
   return (
     <div>
-      <PageHeader title="الباحثون عن عمل" />
+      <PageHeader title="الباحثون عن عمل" icon={<Users className="h-6 w-6" />} />
       <div className="p-4">
         
         <div className="flex gap-2 mb-6">

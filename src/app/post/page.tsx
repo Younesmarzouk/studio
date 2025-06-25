@@ -30,7 +30,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
-import { Briefcase, UserPlus, Loader2, Clock, Phone } from "lucide-react"
+import { Briefcase, UserPlus, Loader2, Clock, Phone, PlusSquare } from "lucide-react"
 import PageHeader from "@/components/page-header"
 import { auth, db } from "@/lib/firebase"
 import { addDoc, collection, doc, getDoc, serverTimestamp } from "firebase/firestore"
@@ -179,7 +179,7 @@ export default function PostPage() {
   if (loading) {
     return (
         <div>
-            <PageHeader title="نشر إعلان جديد" />
+            <PageHeader title="نشر إعلان جديد" icon={<PlusSquare className="h-6 w-6" />} />
             <div className="p-4 max-w-2xl mx-auto">
                 <Card>
                     <CardContent className="pt-6 space-y-8">
@@ -205,7 +205,7 @@ export default function PostPage() {
 
   return (
     <div>
-      <PageHeader title="نشر إعلان جديد" />
+      <PageHeader title="نشر إعلان جديد" icon={<PlusSquare className="h-6 w-6" />} />
       <div className="p-4 max-w-2xl mx-auto">
         <Card>
           <CardContent className="pt-6">
@@ -403,5 +403,3 @@ export default function PostPage() {
       </div>
     </div>
   )
-
-    

@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { User, Bell, Globe, Moon, LogOut, ChevronRight, Paintbrush } from "lucide-react";
+import { User, Bell, Globe, Moon, LogOut, ChevronRight, Paintbrush, Settings } from "lucide-react";
 import Link from 'next/link';
 import PageHeader from '@/components/page-header';
 import { useTheme } from '@/context/theme-provider';
@@ -32,7 +32,7 @@ export default function SettingsPage() {
 
   return (
     <div>
-      <PageHeader title="الإعدادات" />
+      <PageHeader title="الإعدادات" icon={<Settings className="h-6 w-6" />} />
       <div className="p-4 max-w-2xl mx-auto">
         <div className="space-y-6">
           <Card>

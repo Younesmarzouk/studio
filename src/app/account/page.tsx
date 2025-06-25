@@ -32,7 +32,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const AccountPageSkeleton = () => (
     <div>
-        <PageHeader title="حسابي الشخصي" />
+        <PageHeader title="حسابي الشخصي" icon={<User className="h-6 w-6" />} />
         <div className="p-4 md:p-6 lg:p-8 max-w-4xl mx-auto">
             <Card className="overflow-hidden mb-6">
                 <Skeleton className="h-32 w-full" />
@@ -142,7 +142,7 @@ export default function AccountPage() {
     if (!user) {
         return (
             <div>
-                <PageHeader title="حسابي الشخصي" />
+                <PageHeader title="حسابي الشخصي" icon={<User className="h-6 w-6" />} />
                 <div className="p-8 text-center flex flex-col items-center justify-center h-[50vh]">
                     <p className="text-lg text-muted-foreground">الرجاء تسجيل الدخول لعرض ملفك الشخصي.</p>
                     <Link href="/login" passHref>
@@ -156,7 +156,7 @@ export default function AccountPage() {
     return (
         <>
             <div>
-                <PageHeader title="حسابي الشخصي" />
+                <PageHeader title="حسابي الشخصي" icon={<User className="h-6 w-6" />} />
                 <div className="p-4 md:p-6 lg:p-8 max-w-4xl mx-auto bg-background">
                     
                     <Card className="overflow-hidden mb-6 shadow-md">
