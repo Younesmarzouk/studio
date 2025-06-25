@@ -36,8 +36,8 @@ export default function JobCard({ job, isEditable = false, onDeleteClick }: JobC
   };
 
   return (
-    <Card className="overflow-hidden shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-in-out h-full flex flex-col text-right w-full bg-card rounded-2xl p-4">
-      <div className="flex-grow flex flex-col">
+    <Card className="overflow-hidden shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-in-out h-full flex flex-col text-right w-full bg-card rounded-2xl">
+      <div className="flex-grow flex flex-col p-4">
         <Link href={`/jobs/${job.id}`} className="block h-full group flex flex-col flex-grow">
           {job.featured && <Badge className="absolute top-2 left-2 bg-green-100 text-green-800 border-green-200 z-10">مميز</Badge>}
           
@@ -95,9 +95,9 @@ export default function JobCard({ job, isEditable = false, onDeleteClick }: JobC
         </Link>
       </div>
       {isEditable && onDeleteClick && (
-        <>
-          <Separator className="mt-3 mb-2" />
-          <div className="p-0 flex gap-2">
+        <div className="px-4 pb-4 pt-0">
+          <Separator className="mb-3" />
+          <div className="flex gap-2">
             <Button asChild variant="outline" size="sm" className="flex-1">
               <Link href={`/jobs/edit/${job.id}`}>
                 <Pencil className="ml-2 h-4 w-4" /> تعديل
@@ -107,7 +107,7 @@ export default function JobCard({ job, isEditable = false, onDeleteClick }: JobC
               <Trash2 className="ml-2 h-4 w-4" /> حذف
             </Button>
           </div>
-        </>
+        </div>
       )}
     </Card>
   );
