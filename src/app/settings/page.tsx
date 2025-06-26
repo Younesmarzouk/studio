@@ -14,12 +14,6 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'الإعدادات',
-  description: 'إدارة إعدادات حسابك وتفضيلات التطبيق.',
-};
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
