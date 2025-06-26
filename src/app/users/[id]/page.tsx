@@ -85,7 +85,6 @@ export default function UserPage() {
                     const data = doc.data();
                     return {
                         id: doc.id,
-                        slug: data.slug || doc.id,
                         ...data,
                         icon: data.category || 'other',
                         rating: data.rating || 4.5,

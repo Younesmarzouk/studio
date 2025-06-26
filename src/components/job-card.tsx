@@ -79,7 +79,7 @@ export default function JobCard({ job, isEditable = false, onDeleteClick }: JobC
             <div className="flex justify-between items-center text-sm">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1 text-muted-foreground">
-                  <span className="font-medium">({job.rating.toFixed(1)})</span>
+                  <span className="font-medium">({(job.rating || 0).toFixed(1)})</span>
                   <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
                 </div>
                 <div className="flex items-center gap-1 text-muted-foreground">
