@@ -3,28 +3,36 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Allow users to read, create and update their own profiles
-    match /users/{userId} {
-      allow read: if true;
-      allow create, update: if request.auth.uid == userId;
+  
+    // Helper function to check that only specific fields are changing value
+    function onlyTheseFieldsChanged(fieldList) {
+        let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
+        return changedKeys.hasOnly(fieldList);
     }
-    
-    // Rules for ads
+
     match /ads/{adId} {
       allow read: if true;
-      allow create: if request.auth.uid == request.resource.data.userId;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow delete: if request.auth.uid == resource.data.userId;
 
-      // An owner can update their ad's content.
-      // The fields listed here must match the edit form.
-      allow update: if request.auth.uid == resource.data.userId &&
-                     request.resource.data.diff(resource.data).affectedKeys().hasOnly(['title', 'category', 'description', 'city', 'price', 'workType']);
-                     
-      // Any authenticated user can like/unlike an ad.
-      // This rule allows the "Interested" button to work for everyone.
-      allow update: if request.auth.uid != null &&
-                     request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likedBy']);
+      // Allow updates under two specific conditions:
+      allow update: if
+        // 1. The owner is editing the ad content.
+        // They can only change the content fields, not the likes.
+        (request.auth.uid == resource.data.userId &&
+         onlyTheseFieldsChanged(['title', 'category', 'description', 'city', 'price', 'workType', 'userPhone']))
+        ||
+        // 2. Any authenticated user is liking or unliking the ad.
+        // They can ONLY change the 'likes' and 'likedBy' fields.
+        (request.auth != null &&
+         onlyTheseFieldsChanged(['likes', 'likedBy']));
+    }
+
+    match /users/{userId} {
+      allow read: if true;
+      allow create: if request.auth.uid == userId;
+      // The owner can update their own profile, but cannot change their creation timestamp.
+      allow update: if request.auth.uid == userId && request.resource.data.createdAt == resource.data.createdAt;
     }
   }
 }
