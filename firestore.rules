@@ -3,23 +3,36 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function isAuth() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuth() && request.auth.uid == userId;
+    }
+
     match /users/{userId} {
-      allow read: if true; // Anyone can read user profiles
-      allow create, update, delete: if request.auth.uid == userId; // Only the user can modify their own profile
+      allow read: if true;
+      allow create: if isOwner(userId);
+      allow update, delete: if isOwner(userId);
     }
 
     match /ads/{adId} {
-      allow read: if true; // Anyone can read ads
-      allow create: if request.auth.uid == request.resource.data.userId; // User must be owner to create
-      allow delete: if request.auth.uid == resource.data.userId; // User must be owner to delete
-      allow update: if 
-        // The owner of the ad can update any field
-        request.auth.uid == resource.data.userId || 
-        // Any authenticated user can update ONLY the likes and likedBy fields.
-        (
-          request.auth != null &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likedBy'])
-        );
+      allow read: if true;
+      allow create: if isOwner(request.resource.data.userId);
+      allow delete: if isOwner(resource.data.userId);
+
+      // Rule for the ad owner to update their ad content.
+      // They cannot change the likes count or likedBy array themselves.
+      allow update: if isOwner(resource.data.userId) &&
+                     request.resource.data.likes == resource.data.likes &&
+                     request.resource.data.likedBy == resource.data.likedBy;
+
+      // Rule for any authenticated user to like/unlike an ad.
+      // This rule ensures ONLY 'likes' and 'likedBy' fields can be changed in this transaction.
+      allow update: if isAuth() &&
+                     request.resource.data.keys().diff(resource.data.keys()).hasOnly(['likes', 'likedBy']) &&
+                     (request.resource.data.likes == resource.data.likes + 1 || request.resource.data.likes == resource.data.likes - 1);
     }
   }
 }
