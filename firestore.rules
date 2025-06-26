@@ -1,38 +1,39 @@
 
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isAuth() {
-      return request.auth != null;
-    }
-    
-    function isOwner(userId) {
-      return isAuth() && request.auth.uid == userId;
-    }
-
     match /users/{userId} {
-      allow read: if true;
-      allow create: if isOwner(userId);
-      allow update, delete: if isOwner(userId);
+      allow read;
+      allow write: if request.auth.uid == userId;
     }
 
     match /ads/{adId} {
-      allow read: if true;
-      allow create: if isOwner(request.resource.data.userId);
-      allow delete: if isOwner(resource.data.userId);
+      allow read;
+      allow create: if request.auth != null;
 
-      // Rule for the ad owner to update their ad content.
-      // They cannot change the likes count or likedBy array themselves.
-      allow update: if isOwner(resource.data.userId) &&
-                     request.resource.data.likes == resource.data.likes &&
-                     request.resource.data.likedBy == resource.data.likedBy;
+      function isOwner() {
+        return request.auth.uid == resource.data.userId;
+      }
 
-      // Rule for any authenticated user to like/unlike an ad.
-      // This rule ensures ONLY 'likes' and 'likedBy' fields can be changed in this transaction.
-      allow update: if isAuth() &&
-                     request.resource.data.keys().diff(resource.data.keys()).hasOnly(['likes', 'likedBy']) &&
-                     (request.resource.data.likes == resource.data.likes + 1 || request.resource.data.likes == resource.data.likes - 1);
+      function isLiking() {
+        // Checks if the user is only updating the 'likes' and 'likedBy' fields.
+        let changedKeys = request.resource.data.diff(resource.data).affectedKeys;
+        return changedKeys.hasOnly(['likes', 'likedBy']);
+      }
+
+      function isEditingAd() {
+        // Checks if the user is not touching the 'likes' and 'likedBy' fields.
+        let changedKeys = request.resource.data.diff(resource.data).affectedKeys;
+        return !changedKeys.hasAny(['likes', 'likedBy']);
+      }
+
+      // 1. Owner can edit their ad, but cannot touch the like fields in the same update.
+      // 2. Any authenticated user can like/unlike an ad (updating only like fields).
+      allow update: if (isOwner() && isEditingAd()) || (request.auth != null && isLiking());
+
+      allow delete: if isOwner();
     }
   }
 }
