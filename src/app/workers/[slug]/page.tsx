@@ -10,57 +10,15 @@ type Props = {
   params: { slug: string }
 }
 
+// Helper to check if a string could be a Firestore ID
 function isFirestoreId(id: string): boolean {
-  // A simple check for a string that looks like a Firestore ID.
   return /^[a-zA-Z0-9]{20}$/.test(id);
 }
 
-export async function generateStaticParams() {
-  try {
-    const adsCollection = collection(db, 'ads');
-    const q = query(adsCollection, where('type', '==', 'worker'));
-    const adsSnapshot = await getDocs(q);
-    const slugs = adsSnapshot.docs.map(doc => ({
-      slug: doc.data().slug || doc.id,
-    }));
-    return slugs;
-  } catch (error) {
-    console.error("Error generating static params for workers:", error);
-    return [];
-  }
-}
-
-export async function generateMetadata({ params }: Props, parent: ResolvingMetadata): Promise<Metadata> {
-  const slug = params.slug;
-  // Metadata is only generated for valid slugs. ID-based URLs will redirect.
-  const q = query(collection(db, 'ads'), where('slug', '==', slug), limit(1));
-  const querySnapshot = await getDocs(q);
-  
-  if (querySnapshot.empty) {
-    return {
-      title: 'Worker Not Found',
-      description: 'This worker profile may have been moved or deleted.',
-    };
-  }
-
-  const ad = querySnapshot.docs[0].data();
-  const previousImages = (await parent).openGraph?.images || [];
-  
-  return {
-    title: `${ad.title} في ${ad.city}`,
-    description: ad.description.substring(0, 160),
-    openGraph: {
-      title: `${ad.title} في ${ad.city} | ZafayLink`,
-      description: ad.description.substring(0, 160),
-      images: ['/og-image.png', ...previousImages],
-    },
-  };
-}
-
-
-async function getWorkerAd(slug: string): Promise<Ad | null> {
+// Fetches a worker ad by its slug
+async function getWorkerAdBySlug(slug: string): Promise<Ad | null> {
     try {
-        const q = query(collection(db, 'ads'), where('slug', '==', slug), limit(1));
+        const q = query(collection(db, 'ads'), where('slug', '==', slug), where('type', '==', 'worker'), limit(1));
         const snapshot = await getDocs(q);
         if (snapshot.empty) {
             return null;
@@ -70,6 +28,7 @@ async function getWorkerAd(slug: string): Promise<Ad | null> {
         
         let adData = { id: adDoc.id, ...data } as Ad;
         
+        // Ensure user details are populated
         if (!adData.userName || !adData.userAvatar) {
             const userRef = doc(db, 'users', data.userId);
             const userSnap = await getDoc(userRef);
@@ -90,33 +49,79 @@ async function getWorkerAd(slug: string): Promise<Ad | null> {
     }
 }
 
+// Fetches a worker ad by its ID
+async function getWorkerAdById(id: string): Promise<Ad | null> {
+    try {
+        const docRef = doc(db, 'ads', id);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists() && docSnap.data().type === 'worker') {
+            return { id: docSnap.id, ...docSnap.data() } as Ad;
+        }
+        return null;
+    } catch (error) {
+        console.error(`Error fetching worker ad with id ${id}:`, error);
+        return null;
+    }
+}
+
+export async function generateStaticParams() {
+  try {
+    const adsCollection = collection(db, 'ads');
+    const q = query(adsCollection, where('type', '==', 'worker'));
+    const adsSnapshot = await getDocs(q);
+    return adsSnapshot.docs
+        .map(doc => ({ slug: doc.data().slug }))
+        .filter(item => !!item.slug); // Filter out ads without slugs
+  } catch (error) {
+    console.error("Error generating static params for workers:", error);
+    return [];
+  }
+}
+
+export async function generateMetadata({ params }: Props, parent: ResolvingMetadata): Promise<Metadata> {
+  const ad = await getWorkerAdBySlug(params.slug);
+  
+  if (!ad) {
+    return {
+      title: 'Worker Not Found',
+      description: 'This worker profile may have been moved or deleted.',
+    };
+  }
+
+  const previousImages = (await parent).openGraph?.images || [];
+  
+  return {
+    title: `${ad.title} في ${ad.city}`,
+    description: ad.description.substring(0, 160),
+    openGraph: {
+      title: `${ad.title} في ${ad.city} | ZafayLink`,
+      description: ad.description.substring(0, 160),
+      images: ['/og-image.png', ...previousImages],
+    },
+  };
+}
 
 export default async function WorkerSlugPage({ params }: Props) {
   const slugOrId = params.slug;
 
-  // Handle legacy ID-based URLs
+  // 1. Try to fetch the worker ad by slug.
+  let ad = await getWorkerAdBySlug(slugOrId);
+
+  if (ad) {
+    // If found, render the page.
+    return <WorkerDetailsClient ad={ad} />;
+  }
+
+  // 2. If not found by slug, it might be a legacy ID.
   if (isFirestoreId(slugOrId)) {
-    try {
-      const docRef = doc(db, 'ads', slugOrId);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const slug = docSnap.data().slug;
-        if (slug) {
-          redirect(`/workers/${slug}`);
-        }
-      }
-    } catch (e) {
-      console.error("Redirect failed for ID:", slugOrId, e);
+    const adById = await getWorkerAdById(slugOrId);
+    // If found by ID and it has a slug, redirect to the correct URL.
+    if (adById && adById.slug) {
+      return redirect(`/workers/${adById.slug}`);
     }
-    // If lookup fails or slug doesn't exist, it will be handled as not found.
-    notFound();
   }
 
-  const ad = await getWorkerAd(slugOrId);
-
-  if (!ad || ad.type !== 'worker') {
-    notFound();
-  }
-
-  return <WorkerDetailsClient ad={ad} />;
+  // 3. If not a valid slug or a redirectable ID, show 404.
+  notFound();
 }

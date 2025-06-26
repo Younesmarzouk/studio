@@ -10,56 +10,15 @@ type Props = {
   params: { slug: string }
 }
 
+// Helper to check if a string could be a Firestore ID
 function isFirestoreId(id: string): boolean {
-  // A simple check for a string that looks like a Firestore ID.
   return /^[a-zA-Z0-9]{20}$/.test(id);
 }
 
-export async function generateStaticParams() {
+// Fetches an ad by its slug
+async function getJobBySlug(slug: string): Promise<Ad | null> {
   try {
-    const adsCollection = collection(db, 'ads');
-    const q = query(adsCollection, where('type', '==', 'job'));
-    const adsSnapshot = await getDocs(q);
-    const slugs = adsSnapshot.docs.map(doc => ({
-      slug: doc.data().slug || doc.id,
-    }));
-    return slugs;
-  } catch (error) {
-    console.error("Error generating static params for jobs:", error);
-    return [];
-  }
-}
-
-export async function generateMetadata({ params }: Props, parent: ResolvingMetadata): Promise<Metadata> {
-  const slug = params.slug;
-  // Metadata is only generated for valid slugs. ID-based URLs will redirect.
-  const q = query(collection(db, 'ads'), where('slug', '==', slug), limit(1));
-  const querySnapshot = await getDocs(q);
-  
-  if (querySnapshot.empty) {
-    return {
-      title: 'Job Not Found',
-      description: 'This job listing may have been moved or deleted.',
-    };
-  }
-
-  const job = querySnapshot.docs[0].data();
-  const previousImages = (await parent).openGraph?.images || [];
-  
-  return {
-    title: `${job.title} في ${job.city}`,
-    description: job.description.substring(0, 160),
-    openGraph: {
-      title: `${job.title} في ${job.city} | ZafayLink`,
-      description: job.description.substring(0, 160),
-      images: ['/og-image.png', ...previousImages],
-    },
-  };
-}
-
-async function getJob(slug: string): Promise<Ad | null> {
-  try {
-    const q = query(collection(db, 'ads'), where('slug', '==', slug), limit(1));
+    const q = query(collection(db, 'ads'), where('slug', '==', slug), where('type', '==', 'job'), limit(1));
     const snapshot = await getDocs(q);
     if (snapshot.empty) {
       return null;
@@ -88,33 +47,82 @@ async function getJob(slug: string): Promise<Ad | null> {
   }
 }
 
+// Fetches an ad by its ID
+async function getJobById(id: string): Promise<Ad | null> {
+    try {
+        const docRef = doc(db, 'ads', id);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists() && docSnap.data().type === 'job') {
+            return { id: docSnap.id, ...docSnap.data() } as Ad;
+        }
+        return null;
+    } catch (error) {
+        console.error(`Error fetching job with id ${id}:`, error);
+        return null;
+    }
+}
+
+export async function generateStaticParams() {
+  try {
+    const adsCollection = collection(db, 'ads');
+    const q = query(adsCollection, where('type', '==', 'job'));
+    const adsSnapshot = await getDocs(q);
+    return adsSnapshot.docs
+      .map(doc => ({ slug: doc.data().slug }))
+      .filter(item => !!item.slug); // Filter out ads without slugs
+  } catch (error) {
+    console.error("Error generating static params for jobs:", error);
+    return [];
+  }
+}
+
+export async function generateMetadata({ params }: Props, parent: ResolvingMetadata): Promise<Metadata> {
+  const job = await getJobBySlug(params.slug);
+  
+  if (!job) {
+    return {
+      title: 'Job Not Found',
+      description: 'This job listing may have been moved or deleted.',
+    };
+  }
+
+  const previousImages = (await parent).openGraph?.images || [];
+  
+  return {
+    title: `${job.title} في ${job.city}`,
+    description: job.description.substring(0, 160),
+    openGraph: {
+      title: `${job.title} في ${job.city} | ZafayLink`,
+      description: job.description.substring(0, 160),
+      images: ['/og-image.png', ...previousImages],
+    },
+  };
+}
+
 
 export default async function JobSlugPage({ params }: Props) {
   const slugOrId = params.slug;
-
-  // Handle legacy ID-based URLs
-  if (isFirestoreId(slugOrId)) {
-    try {
-      const docRef = doc(db, 'ads', slugOrId);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const slug = docSnap.data().slug;
-        if (slug) {
-          redirect(`/jobs/${slug}`);
-        }
-      }
-    } catch (e) {
-      console.error("Redirect failed for ID:", slugOrId, e);
-    }
-    // If lookup fails or slug doesn't exist, it will be handled as not found.
-    notFound();
-  }
   
-  const job = await getJob(slugOrId);
+  // 1. Try to fetch the job by slug. This is the primary and most common path.
+  let job = await getJobBySlug(slugOrId);
 
-  if (!job) {
-    notFound();
+  if (job) {
+    // If found, render the page with the job details.
+    return <JobDetailsClient job={job} />;
   }
 
-  return <JobDetailsClient job={job} />;
+  // 2. If not found by slug, it might be a legacy ID-based URL.
+  // Check if the parameter looks like a Firestore ID.
+  if (isFirestoreId(slugOrId)) {
+    const jobById = await getJobById(slugOrId);
+    // If we found a job by ID and it has a slug, redirect to the correct SEO-friendly URL.
+    if (jobById && jobById.slug) {
+      return redirect(`/jobs/${jobById.slug}`);
+    }
+  }
+
+  // 3. If we've reached this point, the slug is invalid and it's not a redirectable ID.
+  // Therefore, show the 404 page.
+  notFound();
 }
