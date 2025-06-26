@@ -20,12 +20,7 @@ import {
 } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'الباحثون عن عمل',
-  description: 'تصفح ملفات الحرفيين والعمال المهرة الجاهزين للعمل في منطقتك.',
-};
+import PageHeader from '@/components/page-header';
 
 export default function WorkersPage() {
   const [workers, setWorkers] = useState<any[]>([]);
@@ -49,7 +44,6 @@ export default function WorkersPage() {
               const fetchedWorkerAds = querySnapshot.docs
                 .map(doc => ({ 
                     id: doc.id,
-                    slug: doc.data().slug || doc.id,
                     ...doc.data() 
                 }))
                 .filter((ad: any) => ad.type === 'worker');
@@ -93,7 +87,7 @@ export default function WorkersPage() {
 
   const pageContent = (
     <div className="container mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold mb-6 flex items-center gap-3"><Users className="h-8 w-8"/> الباحثون عن عمل</h1>
+      <PageHeader title="الباحثون عن عمل" icon={<Users className="h-8 w-8"/>} />
       <form onSubmit={(e) => e.preventDefault()} className="flex gap-2 mb-6">
         <div className="relative flex-grow">
           <Input
@@ -173,7 +167,7 @@ export default function WorkersPage() {
   if (loading) {
     return (
         <div className="container mx-auto py-8 px-4">
-            <h1 className="text-3xl font-bold mb-6 flex items-center gap-3"><Users className="h-8 w-8"/> الباحثون عن عمل</h1>
+            <PageHeader title="الباحثون عن عمل" icon={<Users className="h-8 w-8"/>} />
             <div className="flex gap-2 mb-6">
                 <Skeleton className="h-12 flex-grow rounded-xl" />
                 <Skeleton className="h-12 w-12 rounded-md" />

@@ -8,7 +8,6 @@ export type SliderItem = {
 
 export type Ad = {
   id: string | number;
-  slug: string;
   type: 'job' | 'worker';
   title: string;
   description: string;
@@ -30,7 +29,6 @@ export type Ad = {
 
 export type Job = {
   id: string | number;
-  slug: string;
   title: string;
   city: string;
   price: string;
@@ -43,7 +41,6 @@ export type Job = {
 
 export type Worker = {
   id: string | number;
-  slug: string;
   name: string;
   title: string;
   city: string;

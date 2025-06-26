@@ -92,7 +92,6 @@ export default function AccountPage() {
                         return {
                             id: doc.id,
                             ...data,
-                            slug: data.slug || doc.id,
                             icon: data.category || 'other',
                             rating: data.rating || 4.5,
                             likes: data.likes || 0,

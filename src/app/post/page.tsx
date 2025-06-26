@@ -7,7 +7,6 @@ import * as z from "zod"
 import * as React from "react"
 import { useRouter } from "next/navigation"
 import type { User } from "firebase/auth"
-import { generateSlug } from "@/lib/utils"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -122,7 +121,6 @@ export default function PostPage() {
              throw new Error("لم يتم العثور على ملف المستخدم. لا يمكن إنشاء الإعلان.");
         }
         const userData = userDocSnap.data();
-        const slug = generateSlug(values.title, values.city);
 
         await addDoc(collection(db, "ads"), {
             userId: user.uid,
@@ -136,7 +134,6 @@ export default function PostPage() {
             city: values.city,
             price: values.price || "",
             workType: values.workType,
-            slug: slug,
             createdAt: serverTimestamp(),
             featured: false,
             rating: 0,

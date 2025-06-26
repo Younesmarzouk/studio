@@ -22,13 +22,7 @@ import {
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { professions } from "@/lib/professions"
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'عروض العمل',
-  description: 'تصفح أحدث عروض العمل والفرص المتاحة في مختلف المجالات والمدن.',
-};
-
+import PageHeader from '@/components/page-header';
 
 export default function JobsPage() {
   const searchParams = useSearchParams();
@@ -57,7 +51,6 @@ export default function JobsPage() {
                 .map((data: any) => {
                     return {
                         id: data.id,
-                        slug: data.slug || data.id,
                         title: data.title,
                         city: data.city,
                         price: data.price,
@@ -107,7 +100,7 @@ export default function JobsPage() {
 
   const pageContent = (
     <div className="container mx-auto py-8 px-4">
-        <h1 className="text-3xl font-bold mb-6 flex items-center gap-3"><Briefcase className="h-8 w-8"/> عروض العمل</h1>
+        <PageHeader title="عروض العمل" icon={<Briefcase className="h-8 w-8"/>} />
         
         <form onSubmit={(e) => e.preventDefault()} className="flex gap-2 mb-6">
           <div className="relative flex-grow">
@@ -206,7 +199,7 @@ export default function JobsPage() {
   if (loading) {
     return (
         <div className="container mx-auto py-8 px-4">
-            <h1 className="text-3xl font-bold mb-6 flex items-center gap-3"><Briefcase className="h-8 w-8"/> عروض العمل</h1>
+            <PageHeader title="عروض العمل" icon={<Briefcase className="h-8 w-8"/>} />
             <div className="flex gap-2 mb-6">
                 <Skeleton className="h-12 flex-grow rounded-xl" />
                 <Skeleton className="h-12 w-12 rounded-md" />

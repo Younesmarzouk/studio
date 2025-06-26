@@ -37,7 +37,6 @@ import { doc, getDoc, updateDoc } from "firebase/firestore"
 import { useAuthState } from "react-firebase-hooks/auth"
 import { Skeleton } from "@/components/ui/skeleton"
 import { professions } from "@/lib/professions"
-import { generateSlug } from "@/lib/utils"
 
 const formSchema = z.object({
   title: z.string().min(5, "يجب أن يكون العنوان 5 أحرف على الأقل.").max(50, "يجب أن يكون العنوان 50 حرفًا على الأكثر."),
@@ -140,13 +139,8 @@ export default function EditAdPage() {
     try {
       const adDocRef = doc(db, 'ads', id);
 
-      const slug = (values.title !== ad.title || values.city !== ad.city) 
-        ? generateSlug(values.title, values.city) 
-        : ad.slug;
-
       await updateDoc(adDocRef, {
         ...values,
-        slug: slug,
       });
       
       toast({

@@ -60,7 +60,6 @@ export default function Home() {
                 .map((data: any) => {
                     return {
                         id: data.id,
-                        slug: data.slug || data.id,
                         title: data.title,
                         city: data.city,
                         price: data.price,
@@ -78,7 +77,7 @@ export default function Home() {
                 .slice(0, 4)
                 .map((data: any) => ({
                     ...data,
-                    slug: data.slug || data.id,
+                    id: data.id,
                 })); 
             setWorkers(fetchedWorkers);
 
