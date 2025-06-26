@@ -1,8 +1,4 @@
-
-import { redirect } from 'next/navigation';
-
-// This page is a fallback to redirect any lingering slug-based URLs to the main workers page.
-// The primary route for worker details is now /workers/[id].
-export default function WorkerSlugRedirectPage() {
-  redirect('/workers');
-}
+// This file is a placeholder to resolve a build conflict.
+// The route /workers/[id] is the correct one for the application.
+// This file can be safely deleted.
+export const placeholder = {};
