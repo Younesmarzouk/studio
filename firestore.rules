@@ -1,35 +1,23 @@
-
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Rule for user profiles
+
     match /users/{userId} {
-      // Users can read and write to their own profile.
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read;
+      // Allow create, update, delete only for the authenticated user themselves
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Rules for ads
     match /ads/{adId} {
-      // Anyone can read any ad.
-      allow read: if true;
+      allow read;
+      allow create: if request.auth != null;
+      allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
 
-      // Authenticated users can create new ads.
-      // The ad must belong to them.
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-
-      // Rules for updating ads
+      // Allow update for the owner (all fields) OR for any authenticated user if ONLY likes/likedBy are changing.
       allow update: if request.auth != null && (
-        // Case 1: The owner of the ad can update any field.
         (resource.data.userId == request.auth.uid) ||
-        // Case 2: Any authenticated user can "like" an ad.
-        // This is restricted to only changing the 'likes' and 'likedBy' fields.
         (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likedBy']))
       );
-
-      // The owner of the ad can delete it.
-      allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
   }
 }
