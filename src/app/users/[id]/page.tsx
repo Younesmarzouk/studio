@@ -10,7 +10,6 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { User, Phone, Mail, Award, Briefcase, Building, MapPin, Pencil, GalleryHorizontal, List } from 'lucide-react';
 import Link from 'next/link';
-import PageHeader from '@/components/page-header';
 import { Skeleton } from "@/components/ui/skeleton";
 import type { UserProfile } from '@/lib/types';
 import { auth, db } from '@/lib/firebase';
@@ -22,8 +21,7 @@ import { useParams, notFound } from 'next/navigation';
 import { useAuthState } from 'react-firebase-hooks/auth';
 
 const UserPageSkeleton = () => (
-    <div>
-        <PageHeader title="ملف شخصي" icon={<User className="h-6 w-6" />} showBackButton />
+    <div className="container mx-auto py-8 px-4">
         <div className="p-4 md:p-6 lg:p-8 max-w-4xl mx-auto">
             <Card className="overflow-hidden mb-6">
                 <Skeleton className="h-32 w-full" />
@@ -87,6 +85,7 @@ export default function UserPage() {
                     const data = doc.data();
                     return {
                         id: doc.id,
+                        slug: data.slug || doc.id,
                         ...data,
                         icon: data.category || 'other',
                         rating: data.rating || 4.5,
@@ -116,9 +115,8 @@ export default function UserPage() {
     const isOwnProfile = loggedInUser && loggedInUser.uid === userId;
 
     return (
-        <div>
-            <PageHeader title={`ملف ${profileUser.name}`} icon={<User className="h-6 w-6" />} showBackButton />
-            <div className="p-4 md:p-6 lg:p-8 max-w-4xl mx-auto bg-background">
+        <div className="container mx-auto py-8 px-4">
+            <div className="max-w-4xl mx-auto bg-background">
                 
                 <Card className="overflow-hidden mb-6 shadow-md">
                     <CardHeader className="p-0">

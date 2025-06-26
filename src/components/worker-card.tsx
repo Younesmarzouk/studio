@@ -30,7 +30,7 @@ export default function WorkerCard({ worker, isEditable = false, onDeleteClick }
   return (
     <Card className="overflow-hidden shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-in-out h-full flex flex-col text-right w-full bg-card rounded-2xl">
        <div className="flex-grow flex flex-col p-4">
-          <Link href={`/workers/${worker.id}`} className="block h-full group flex flex-col flex-grow">
+          <Link href={`/workers/${worker.slug}`} className="block h-full group flex flex-col flex-grow">
               <div className="flex items-center gap-4 mb-3">
                 <div className="flex-shrink-0 w-16 h-16 bg-secondary rounded-xl flex items-center justify-center">
                   <IconComponent className="h-8 w-8 text-primary" />

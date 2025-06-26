@@ -10,7 +10,6 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { User, Phone, Mail, Award, Briefcase, Building, MapPin, Pencil, GalleryHorizontal, List, Trash2 } from 'lucide-react';
 import Link from 'next/link';
-import PageHeader from '@/components/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { UserProfile } from '@/lib/types';
 import { auth, db } from '@/lib/firebase';
@@ -32,8 +31,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 
 const AccountPageSkeleton = () => (
-    <div>
-        <PageHeader title="حسابي الشخصي" icon={<User className="h-6 w-6" />} />
+    <div className="container mx-auto py-8 px-4">
         <div className="p-4 md:p-6 lg:p-8 max-w-4xl mx-auto">
             <Card className="overflow-hidden mb-6">
                 <Skeleton className="h-32 w-full" />
@@ -94,6 +92,7 @@ export default function AccountPage() {
                         return {
                             id: doc.id,
                             ...data,
+                            slug: data.slug || doc.id,
                             icon: data.category || 'other',
                             rating: data.rating || 4.5,
                             likes: data.likes || 0,
@@ -139,8 +138,8 @@ export default function AccountPage() {
 
     if (!user) {
         return (
-            <div>
-                <PageHeader title="حسابي الشخصي" icon={<User className="h-6 w-6" />} />
+            <div className="container mx-auto py-8 px-4">
+                <h1 className="text-3xl font-bold mb-6 text-center">حسابي الشخصي</h1>
                 <div className="p-8 text-center flex flex-col items-center justify-center h-[50vh]">
                     <p className="text-lg text-muted-foreground">الرجاء تسجيل الدخول لعرض ملفك الشخصي.</p>
                     <Link href="/login" passHref>
@@ -153,9 +152,8 @@ export default function AccountPage() {
 
     return (
         <>
-            <div>
-                <PageHeader title="حسابي الشخصي" icon={<User className="h-6 w-6" />} />
-                <div className="p-4 md:p-6 lg:p-8 max-w-4xl mx-auto bg-background">
+            <div className="container mx-auto py-8 px-4 bg-background">
+                <div className="max-w-4xl mx-auto">
                     
                     <Card className="overflow-hidden mb-6 shadow-md">
                         <CardHeader className="p-0">

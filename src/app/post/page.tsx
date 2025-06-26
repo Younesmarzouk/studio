@@ -7,6 +7,7 @@ import * as z from "zod"
 import * as React from "react"
 import { useRouter } from "next/navigation"
 import type { User } from "firebase/auth"
+import { generateSlug } from "@/lib/utils"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -31,7 +32,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
 import { Briefcase, UserPlus, Loader2, Clock, Phone, PlusSquare } from "lucide-react"
-import PageHeader from "@/components/page-header"
 import { auth, db } from "@/lib/firebase"
 import { addDoc, collection, doc, getDoc, serverTimestamp } from "firebase/firestore"
 import { onAuthStateChanged } from "firebase/auth"
@@ -122,6 +122,7 @@ export default function PostPage() {
              throw new Error("لم يتم العثور على ملف المستخدم. لا يمكن إنشاء الإعلان.");
         }
         const userData = userDocSnap.data();
+        const slug = generateSlug(values.title, values.city);
 
         await addDoc(collection(db, "ads"), {
             userId: user.uid,
@@ -135,6 +136,7 @@ export default function PostPage() {
             city: values.city,
             price: values.price || "",
             workType: values.workType,
+            slug: slug,
             createdAt: serverTimestamp(),
             featured: false,
             rating: 0,
@@ -180,9 +182,9 @@ export default function PostPage() {
   
   if (loading) {
     return (
-        <div>
-            <PageHeader title="نشر إعلان جديد" icon={<PlusSquare className="h-6 w-6" />} />
-            <div className="p-4 max-w-2xl mx-auto">
+        <div className="container mx-auto py-8 px-4">
+            <h1 className="text-3xl font-bold mb-6 flex items-center gap-3"><PlusSquare className="h-8 w-8"/> نشر إعلان جديد</h1>
+            <div className="max-w-2xl mx-auto">
                 <Card>
                     <CardContent className="pt-6 space-y-8">
                         <div className="space-y-2">
@@ -206,9 +208,9 @@ export default function PostPage() {
   }
 
   return (
-    <div>
-      <PageHeader title="نشر إعلان جديد" icon={<PlusSquare className="h-6 w-6" />} />
-      <div className="p-4 max-w-2xl mx-auto">
+    <div className="container mx-auto py-8 px-4">
+      <div className="max-w-2xl mx-auto">
+      <h1 className="text-3xl font-bold mb-6 flex items-center gap-3"><PlusSquare className="h-8 w-8"/> نشر إعلان جديد</h1>
         <Card>
           <CardContent className="pt-6">
             <Form {...form}>

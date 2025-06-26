@@ -6,8 +6,31 @@ export type SliderItem = {
   "data-ai-hint": string;
 };
 
+export type Ad = {
+  id: string | number;
+  slug: string;
+  type: 'job' | 'worker';
+  title: string;
+  description: string;
+  responsibilities?: string[];
+  category: string;
+  icon: string;
+  city: string;
+  price?: string;
+  rating: number;
+  featured: boolean;
+  workType?: 'daily' | 'part-time' | 'seasonal' | 'full-time';
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  userPhone?: string;
+  likes: number;
+  likedBy: string[];
+};
+
 export type Job = {
   id: string | number;
+  slug: string;
   title: string;
   city: string;
   price: string;
@@ -20,6 +43,7 @@ export type Job = {
 
 export type Worker = {
   id: string | number;
+  slug: string;
   name: string;
   title: string;
   city: string;

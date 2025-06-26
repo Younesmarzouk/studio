@@ -8,13 +8,18 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { User, Bell, Globe, Moon, LogOut, ChevronRight, Paintbrush, Settings, LogIn } from "lucide-react";
 import Link from 'next/link';
-import PageHeader from '@/components/page-header';
 import { useTheme } from '@/context/theme-provider';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { Skeleton } from '@/components/ui/skeleton';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'الإعدادات',
+  description: 'إدارة إعدادات حسابك وتفضيلات التطبيق.',
+};
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
@@ -58,9 +63,9 @@ export default function SettingsPage() {
   };
 
   return (
-    <div>
-      <PageHeader title="الإعدادات" icon={<Settings className="h-6 w-6" />} />
-      <div className="p-4 max-w-2xl mx-auto">
+    <div className="container mx-auto py-8 px-4">
+      <div className="max-w-2xl mx-auto">
+        <h1 className="text-3xl font-bold mb-6 flex items-center gap-3"><Settings className="h-8 w-8"/> الإعدادات</h1>
         <div className="space-y-6">
           <Card>
             <CardHeader>

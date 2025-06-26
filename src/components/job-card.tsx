@@ -38,7 +38,7 @@ export default function JobCard({ job, isEditable = false, onDeleteClick }: JobC
   return (
     <Card className="overflow-hidden shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-in-out h-full flex flex-col text-right w-full bg-card rounded-2xl">
       <div className="flex-grow flex flex-col p-4">
-        <Link href={`/jobs/${job.id}`} className="block h-full group flex flex-col flex-grow">
+        <Link href={`/jobs/${job.slug}`} className="block h-full group flex flex-col flex-grow">
           {job.featured && <Badge className="absolute top-2 left-2 bg-green-100 text-green-800 border-green-200 z-10">مميز</Badge>}
           
           <div className="flex items-center gap-4 mb-3">
@@ -63,7 +63,7 @@ export default function JobCard({ job, isEditable = false, onDeleteClick }: JobC
                   <div className="flex items-center gap-2">
                   <Wallet className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">الأجر:</span>
-                  <span>{job.price} درهم</span>
+                  <span>{job.price}</span>
                   </div>
               )}
               {job.workType && (

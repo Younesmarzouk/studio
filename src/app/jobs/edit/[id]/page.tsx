@@ -32,12 +32,12 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, Save, Pencil } from "lucide-react"
-import PageHeader from "@/components/page-header"
 import { auth, db } from "@/lib/firebase"
 import { doc, getDoc, updateDoc } from "firebase/firestore"
 import { useAuthState } from "react-firebase-hooks/auth"
 import { Skeleton } from "@/components/ui/skeleton"
 import { professions } from "@/lib/professions"
+import { generateSlug } from "@/lib/utils"
 
 const formSchema = z.object({
   title: z.string().min(5, "يجب أن يكون العنوان 5 أحرف على الأقل.").max(50, "يجب أن يكون العنوان 50 حرفًا على الأكثر."),
@@ -53,9 +53,9 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const EditAdSkeleton = () => (
-    <div>
-        <PageHeader title="تعديل الإعلان" icon={<Pencil className="h-6 w-6" />} showBackButton />
-        <div className="p-4 max-w-2xl mx-auto">
+    <div className="container mx-auto py-8 px-4">
+        <h1 className="text-3xl font-bold mb-6">تعديل الإعلان</h1>
+        <div className="max-w-2xl mx-auto">
             <Card>
                 <CardHeader>
                     <Skeleton className="h-8 w-48" />
@@ -139,8 +139,14 @@ export default function EditAdPage() {
 
     try {
       const adDocRef = doc(db, 'ads', id);
+
+      const slug = (values.title !== ad.title || values.city !== ad.city) 
+        ? generateSlug(values.title, values.city) 
+        : ad.slug;
+
       await updateDoc(adDocRef, {
-        ...values
+        ...values,
+        slug: slug,
       });
       
       toast({
@@ -175,9 +181,9 @@ export default function EditAdPage() {
   }
   
   return (
-    <div>
-      <PageHeader title="تعديل الإعلان" icon={<Pencil className="h-6 w-6" />} showBackButton />
-      <div className="p-4 max-w-2xl mx-auto">
+    <div className="container mx-auto py-8 px-4">
+      <div className="max-w-2xl mx-auto">
+      <h1 className="text-3xl font-bold mb-6 flex items-center gap-3"><Pencil className="h-8 w-8"/> تعديل الإعلان</h1>
         <Card>
            <CardHeader>
                 <CardTitle>تعديل معلومات الإعلان</CardTitle>
