@@ -1,13 +1,18 @@
 
 import { collection, query, where, getDocs, limit, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import type { Metadata, ResolvingMetadata } from 'next';
 import type { Ad } from '@/lib/data';
 import WorkerDetailsClient from './worker-details-client';
 
 type Props = {
   params: { slug: string }
+}
+
+function isFirestoreId(id: string): boolean {
+  // A simple check for a string that looks like a Firestore ID.
+  return /^[a-zA-Z0-9]{20}$/.test(id);
 }
 
 export async function generateStaticParams() {
@@ -27,6 +32,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props, parent: ResolvingMetadata): Promise<Metadata> {
   const slug = params.slug;
+  // Metadata is only generated for valid slugs. ID-based URLs will redirect.
   const q = query(collection(db, 'ads'), where('slug', '==', slug), limit(1));
   const querySnapshot = await getDocs(q);
   
@@ -72,7 +78,7 @@ async function getWorkerAd(slug: string): Promise<Ad | null> {
                 adData = {
                     ...adData,
                     userName: adData.userName || userData.name,
-                    userAvatar: adData.userAvatar || userData.avatar || `https://api.dicebear.com/8.x/adventurer/svg?seed=${userData.email}`,
+                    userAvatar: adData.userAvatar || `https://api.dicebear.com/8.x/adventurer/svg?seed=${userData.email}`,
                 };
             }
         }
@@ -86,7 +92,27 @@ async function getWorkerAd(slug: string): Promise<Ad | null> {
 
 
 export default async function WorkerSlugPage({ params }: Props) {
-  const ad = await getWorkerAd(params.slug);
+  const slugOrId = params.slug;
+
+  // Handle legacy ID-based URLs
+  if (isFirestoreId(slugOrId)) {
+    try {
+      const docRef = doc(db, 'ads', slugOrId);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const slug = docSnap.data().slug;
+        if (slug) {
+          redirect(`/workers/${slug}`);
+        }
+      }
+    } catch (e) {
+      console.error("Redirect failed for ID:", slugOrId, e);
+    }
+    // If lookup fails or slug doesn't exist, it will be handled as not found.
+    notFound();
+  }
+
+  const ad = await getWorkerAd(slugOrId);
 
   if (!ad || ad.type !== 'worker') {
     notFound();
