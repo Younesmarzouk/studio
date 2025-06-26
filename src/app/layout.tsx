@@ -5,6 +5,8 @@ import type { Metadata } from 'next';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/context/theme-provider';
 import MainNav from '@/components/main-nav';
+import { Analytics } from "@vercel/analytics/react"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 export const metadata: Metadata = {
   title: 'ZafayLink',
@@ -35,6 +37,8 @@ export default function RootLayout({
             </div>
             <Toaster />
         </ThemeProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
